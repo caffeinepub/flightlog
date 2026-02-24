@@ -1,0 +1,191 @@
+{
+  "kind": "build_request",
+  "title": "Flight Log Web Application with User Authentication",
+  "projectName": "Flight Log Pro",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Implement Internet Identity authentication so users must log in before accessing any part of the application. Each user's data (flights, students, instructors, aircraft, exercises) must be scoped to their own identity.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "Code to create a Web application Android and user login"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Unauthenticated users see a login screen and cannot navigate to any other view",
+        "Clicking 'Login' triggers Internet Identity authentication",
+        "After successful login, the user is redirected to the main menu",
+        "Logout button is visible from the main menu and clears the session"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Implement backend storage for per-user lists of students, instructors, aircraft, and exercises. Provide Motoko actor functions to add, edit, delete, and list each category, all scoped by the caller's principal.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "👨‍🎓 Students",
+          "👨‍✈️ Instructors",
+          "✈ Aircraft",
+          "📘 Exercises"
+        ]
+      },
+      "acceptanceCriteria": [
+        "addStudent, updateStudent, deleteStudent, listStudents functions exist and are scoped to caller",
+        "addInstructor, updateInstructor, deleteInstructor, listInstructors functions exist and are scoped to caller",
+        "addAircraft, updateAircraft, deleteAircraft, listAircraft functions exist and are scoped to caller",
+        "addExercise, updateExercise, deleteExercise, listExercises functions exist and are scoped to caller"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Implement backend storage for flight log entries. Each flight record must store: date (YYYY-MM-DD), student name, instructor name, aircraft, flight type (Solo/Dual), exercise, takeoff time (HH:MM), landing time (HH:MM), total flight time (computed as HH:MM difference), landing type (Day/Night), and landing count. Provide functions to add a flight entry and retrieve flight entries with optional filters for month (YYYY-MM) and student name, all scoped to the caller's principal.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "HEADERS = [\"Date\",\"Student\",\"Instructor\",\"Aircraft\",\"Type\",\"Exercise\",\"Takeoff\",\"Landing\",\"Total\",\"LandingType\",\"LandingCount\"]"
+        ]
+      },
+      "acceptanceCriteria": [
+        "addFlightLog function accepts all 11 fields and stores the entry for the caller",
+        "getFlightLogs function returns all flight entries for the caller",
+        "getFlightLogs accepts optional month and student name filter parameters",
+        "Total flight time is computed from takeoff and landing times"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Build a List Manager UI screen (reused for Students, Instructors, Aircraft, and Exercises). It must display the current list of items, allow adding a new item via a text input, allow editing an existing item inline, and allow deleting an item. Changes must persist to the backend.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "class ListManager(BoxLayout)"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Text input and Save button allow adding a new item to the list",
+        "Each list item has an Edit (✏) button that pre-fills the input for editing",
+        "Each list item has a Delete (🗑) button that removes it from the list and backend",
+        "List refreshes after every add, edit, or delete action",
+        "The same component is used for all four categories"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Build a Flight Log Entry form screen. It must include: a date field pre-filled with today's date, dropdown selectors for student, instructor, aircraft, and exercise (populated from the backend lists), a flight type selector (Solo / Dual), takeoff time input (HH:MM), landing time input (HH:MM), landing type selector (Day / Night), and landing count numeric input. Saving the form must compute total flight time and persist the entry to the backend.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "class FlightUI(BoxLayout)"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Date field defaults to today's date in YYYY-MM-DD format",
+        "Student, Instructor, Aircraft, and Exercise dropdowns are populated from backend data",
+        "Flight Type selector offers 'Solo' and 'Dual' options",
+        "Landing Type selector offers 'Day' and 'Night' options",
+        "Landing Count accepts only integers",
+        "Takeoff and Landing time fields accept HH:MM format",
+        "Saving the form computes total flight time and submits all fields to the backend",
+        "A success message or confirmation is shown after saving"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Build a Flight Records view screen that displays all flight log entries for the logged-in user in a scrollable table. Include filter controls for month (YYYY-MM input) and student name (text input) with Search and Reset buttons. Columns must show: Date, Student, Instructor, Aircraft, Type, Exercise, Takeoff, Landing, Total, Landing Type, Landing Count.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "class FlightView(BoxLayout)",
+          "self.month_filter",
+          "self.student_filter"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Flight records are displayed in a scrollable table with all 11 column headers",
+        "Month filter (YYYY-MM) narrows results to entries matching that month",
+        "Student filter narrows results to entries containing the search string (case-insensitive)",
+        "Both filters can be combined",
+        "Reset button clears filters and reloads all records",
+        "Empty state message shown when no records match"
+      ]
+    },
+    {
+      "id": "REQ-7",
+      "text": "Build a Main Menu / navigation screen that is shown after login. It must provide navigation buttons to: Flight Log (entry form), Students, Instructors, Aircraft, Exercises (each opening the respective List Manager), and Flight Records (view). Include a Logout button in the header.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "class MainMenu(BoxLayout)",
+          "show_menu"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Main menu shows navigation buttons for all 6 sections",
+        "Each button navigates to the correct screen",
+        "A Logout button is present and clears the user session"
+      ]
+    },
+    {
+      "id": "REQ-8",
+      "text": "Apply a clean aviation-themed visual design across all screens. Use a dark navy and sky-blue color palette with crisp white typography, bold section headers, and card-based layout panels. Ensure the layout is responsive and usable on both desktop and mobile (Android) screen sizes with touch-friendly tap targets.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-2"
+        ],
+        "quotes": [
+          "Web application Android"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Consistent dark navy and sky-blue color palette applied throughout",
+        "All buttons and interactive elements have minimum 44px touch target height",
+        "Layout adapts to mobile screen widths without horizontal scrolling",
+        "Card-style panels are used to group form sections and list items"
+      ]
+    }
+  ],
+  "constraints": [
+    "All data must be scoped per authenticated user principal — no shared global state between users",
+    "Authentication must use Internet Identity only",
+    "Total flight time must be computed from takeoff and landing time fields, not entered manually"
+  ],
+  "nonGoals": [
+    "PDF or CSV export of flight records",
+    "Multi-role permissions (admin vs student vs instructor roles)",
+    "Real-time collaboration or shared flight logs between users",
+    "Push notifications or email alerts",
+    "Native Android APK packaging"
+  ],
+  "imageRequirements": {
+    "required": [
+      "Aviation-themed app logo with a stylized aircraft silhouette and clean sans-serif wordmark on dark background (flight-log-logo.dim_256x256.png)",
+      "Dark navy background with subtle cloud texture and horizon line for login screen (login-bg.dim_1280x800.png)"
+    ],
+    "edits": []
+  }
+}
