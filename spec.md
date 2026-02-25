@@ -1,13 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Fix the update, edit, and delete operations for flight log entries so they work correctly end-to-end.
+**Goal:** Fix broken update and delete operations for flight log entries so that editing and removing records works correctly end-to-end.
 
 **Planned changes:**
-- Fix the `updateFlightEntry` Motoko backend function to correctly persist and return updated flight entries
-- Fix the `deleteFlightEntry` Motoko backend function to correctly remove entries from storage
-- Fix the `useEditFlightEntry` frontend mutation hook to properly serialize fields, call the backend, and invalidate the query cache on success
-- Fix the delete mutation hook and confirmation dialog in `FlightRecordsTable` to correctly call the backend delete function and update the displayed table
-- Add success and error toast notifications for both update and delete operations
+- Fix the edit/update mutation in the frontend so that submitting the EditFlightEntryModal correctly calls the backend with the entry ID and updated data, and refreshes the table
+- Fix the delete operation in the frontend so that confirming the deletion dialog correctly calls the backend and removes the entry from the table
+- Audit and fix the backend Motoko actor update and delete functions to correctly locate entries by ID, persist changes or removals, and return proper success/error responses
+- Ensure role-based access control is respected for both update and delete operations
 
-**User-visible outcome:** Users can edit and delete flight log entries; changes are immediately reflected in the records table with appropriate success or error notifications.
+**User-visible outcome:** Users can successfully edit and delete flight log entries; changes are immediately reflected in the flight records table with no errors.

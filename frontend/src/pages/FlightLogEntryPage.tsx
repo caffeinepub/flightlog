@@ -12,13 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { calcFlightTime, getTodayDateString } from '../utils/timeCalculations';
+import { ArrowLeft, PlaneTakeoff, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { calcFlightTime, dateStringToEpochBigInt, getTodayDateString } from '../utils/timeCalculations';
-import { ArrowLeft, Plane, Save } from 'lucide-react';
 
 export default function FlightLogEntryPage() {
   const navigate = useNavigate();
   const addFlightEntry = useAddFlightEntry();
+
   const { data: students } = useListCategories('student');
   const { data: instructors } = useListCategories('instructor');
   const { data: aircraftList } = useListCategories('aircraft');
@@ -34,6 +36,7 @@ export default function FlightLogEntryPage() {
   const [landingTime, setLandingTime] = useState('');
   const [landingType, setLandingType] = useState<'day' | 'night'>('day');
   const [landingCount, setLandingCount] = useState('1');
+  const [formError, setFormError] = useState<string | null>(null);
 
   const totalFlightTime = calcFlightTime(takeoffTime, landingTime);
 
@@ -45,23 +48,27 @@ export default function FlightLogEntryPage() {
     if (!exercise) return 'Exercise is required';
     if (!takeoffTime) return 'Takeoff time is required';
     if (!landingTime) return 'Landing time is required';
-    if (!/^\d{1,2}:\d{2}$/.test(takeoffTime)) return 'Takeoff time must be HH:MM format';
-    if (!/^\d{1,2}:\d{2}$/.test(landingTime)) return 'Landing time must be HH:MM format';
+    if (!/^\d{1,2}:\d{2}$/.test(takeoffTime)) return 'Takeoff time must be HH:MM';
+    if (!/^\d{1,2}:\d{2}$/.test(landingTime)) return 'Landing time must be HH:MM';
     const count = parseInt(landingCount);
     if (isNaN(count) || count < 1) return 'Landing count must be at least 1';
     return null;
   };
 
   const handleSave = async () => {
-    const error = validate();
-    if (error) {
-      toast.error(error);
+    setFormError(null);
+    const validationError = validate();
+    if (validationError) {
+      setFormError(validationError);
       return;
     }
 
+    // Use current time in nanoseconds as dateEpoch so it matches the backend storage key
+    const nowNs = BigInt(Date.now()) * BigInt(1_000_000);
+
     const entry: FlightEntry = {
       date,
-      dateEpoch: dateStringToEpochBigInt(date),
+      dateEpoch: nowNs,
       student,
       instructor,
       aircraft,
@@ -76,27 +83,19 @@ export default function FlightLogEntryPage() {
 
     try {
       await addFlightEntry.mutateAsync(entry);
-      toast.success('Flight entry saved!');
-      // Reset form
-      setDate(getTodayDateString());
-      setStudent('');
-      setInstructor('');
-      setAircraft('');
-      setExercise('');
-      setFlightType('dual');
-      setTakeoffTime('');
-      setLandingTime('');
-      setLandingType('day');
-      setLandingCount('1');
-    } catch {
-      toast.error('Failed to save flight entry');
+      toast.success('Flight entry saved successfully');
+      navigate({ to: '/flight-records' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to save flight entry';
+      setFormError(message);
+      toast.error(message);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
       {/* Page header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3">
         <button
           onClick={() => navigate({ to: '/' })}
           className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground"
@@ -105,12 +104,19 @@ export default function FlightLogEntryPage() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-2">
-          <Plane className="w-5 h-5 text-primary" />
+          <PlaneTakeoff className="w-5 h-5 text-primary" />
           <h1 className="font-display text-xl font-bold text-foreground">New Flight Entry</h1>
         </div>
       </div>
 
-      <div className="bg-card border border-border rounded-2xl p-6 space-y-5">
+      <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+        {formError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        )}
+
         {/* Date */}
         <div className="space-y-1.5">
           <Label htmlFor="date">Date</Label>
@@ -118,26 +124,27 @@ export default function FlightLogEntryPage() {
             id="date"
             type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e) => { setDate(e.target.value); setFormError(null); }}
             className="h-11"
+            disabled={addFlightEntry.isPending}
           />
         </div>
 
         {/* Student */}
         <div className="space-y-1.5">
           <Label>Student</Label>
-          <Select value={student} onValueChange={setStudent}>
+          <Select
+            value={student}
+            onValueChange={(v) => { setStudent(v); setFormError(null); }}
+            disabled={addFlightEntry.isPending}
+          >
             <SelectTrigger className="h-11">
               <SelectValue placeholder="Select student" />
             </SelectTrigger>
             <SelectContent>
-              {students && students.length > 0 ? (
-                students.map(s => (
-                  <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>
-                ))
-              ) : (
-                <SelectItem value="_none" disabled>No students — add in Students page</SelectItem>
-              )}
+              {students?.map(s => (
+                <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -145,18 +152,18 @@ export default function FlightLogEntryPage() {
         {/* Instructor */}
         <div className="space-y-1.5">
           <Label>Instructor</Label>
-          <Select value={instructor} onValueChange={setInstructor}>
+          <Select
+            value={instructor}
+            onValueChange={(v) => { setInstructor(v); setFormError(null); }}
+            disabled={addFlightEntry.isPending}
+          >
             <SelectTrigger className="h-11">
               <SelectValue placeholder="Select instructor" />
             </SelectTrigger>
             <SelectContent>
-              {instructors && instructors.length > 0 ? (
-                instructors.map(i => (
-                  <SelectItem key={i.name} value={i.name}>{i.name}</SelectItem>
-                ))
-              ) : (
-                <SelectItem value="_none" disabled>No instructors — add in Instructors page</SelectItem>
-              )}
+              {instructors?.map(i => (
+                <SelectItem key={i.name} value={i.name}>{i.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -164,18 +171,18 @@ export default function FlightLogEntryPage() {
         {/* Aircraft */}
         <div className="space-y-1.5">
           <Label>Aircraft</Label>
-          <Select value={aircraft} onValueChange={setAircraft}>
+          <Select
+            value={aircraft}
+            onValueChange={(v) => { setAircraft(v); setFormError(null); }}
+            disabled={addFlightEntry.isPending}
+          >
             <SelectTrigger className="h-11">
               <SelectValue placeholder="Select aircraft" />
             </SelectTrigger>
             <SelectContent>
-              {aircraftList && aircraftList.length > 0 ? (
-                aircraftList.map(a => (
-                  <SelectItem key={a.name} value={a.name}>{a.name}</SelectItem>
-                ))
-              ) : (
-                <SelectItem value="_none" disabled>No aircraft — add in Aircraft page</SelectItem>
-              )}
+              {aircraftList?.map(a => (
+                <SelectItem key={a.name} value={a.name}>{a.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -183,18 +190,18 @@ export default function FlightLogEntryPage() {
         {/* Exercise */}
         <div className="space-y-1.5">
           <Label>Exercise</Label>
-          <Select value={exercise} onValueChange={setExercise}>
+          <Select
+            value={exercise}
+            onValueChange={(v) => { setExercise(v); setFormError(null); }}
+            disabled={addFlightEntry.isPending}
+          >
             <SelectTrigger className="h-11">
               <SelectValue placeholder="Select exercise" />
             </SelectTrigger>
             <SelectContent>
-              {exercises && exercises.length > 0 ? (
-                exercises.map(e => (
-                  <SelectItem key={e.name} value={e.name}>{e.name}</SelectItem>
-                ))
-              ) : (
-                <SelectItem value="_none" disabled>No exercises — add in Exercises page</SelectItem>
-              )}
+              {exercises?.map(e => (
+                <SelectItem key={e.name} value={e.name}>{e.name}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -204,21 +211,25 @@ export default function FlightLogEntryPage() {
           <Label>Flight Type</Label>
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={() => setFlightType('dual')}
+              disabled={addFlightEntry.isPending}
               className={`flex-1 h-11 rounded-lg border text-sm font-medium transition-colors ${
                 flightType === 'dual'
                   ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary/50'
+                  : 'bg-background border-border text-foreground hover:bg-muted'
               }`}
             >
               Dual
             </button>
             <button
+              type="button"
               onClick={() => setFlightType('solo')}
+              disabled={addFlightEntry.isPending}
               className={`flex-1 h-11 rounded-lg border text-sm font-medium transition-colors ${
                 flightType === 'solo'
                   ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary/50'
+                  : 'bg-background border-border text-foreground hover:bg-muted'
               }`}
             >
               Solo
@@ -227,57 +238,63 @@ export default function FlightLogEntryPage() {
         </div>
 
         {/* Times */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="takeoff">Takeoff (HH:MM)</Label>
             <Input
               id="takeoff"
-              value={takeoffTime}
-              onChange={(e) => setTakeoffTime(e.target.value)}
+              type="text"
               placeholder="09:00"
+              value={takeoffTime}
+              onChange={(e) => { setTakeoffTime(e.target.value); setFormError(null); }}
               className="h-11"
+              disabled={addFlightEntry.isPending}
             />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="landing">Landing (HH:MM)</Label>
             <Input
               id="landing"
-              value={landingTime}
-              onChange={(e) => setLandingTime(e.target.value)}
+              type="text"
               placeholder="10:30"
+              value={landingTime}
+              onChange={(e) => { setLandingTime(e.target.value); setFormError(null); }}
               className="h-11"
+              disabled={addFlightEntry.isPending}
             />
           </div>
-        </div>
-
-        {/* Total flight time display */}
-        {takeoffTime && landingTime && (
-          <div className="bg-primary/10 border border-primary/30 rounded-lg px-4 py-3 flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Total Flight Time</span>
-            <span className="font-display font-bold text-primary text-xl">{totalFlightTime}</span>
+          <div className="space-y-1.5">
+            <Label>Total Time</Label>
+            <div className="h-11 flex items-center px-3 rounded-lg bg-muted border border-border text-sm font-bold text-primary">
+              {totalFlightTime}
+            </div>
           </div>
-        )}
+        </div>
 
         {/* Landing Type */}
         <div className="space-y-1.5">
           <Label>Landing Type</Label>
           <div className="flex gap-2">
             <button
+              type="button"
               onClick={() => setLandingType('day')}
+              disabled={addFlightEntry.isPending}
               className={`flex-1 h-11 rounded-lg border text-sm font-medium transition-colors ${
                 landingType === 'day'
                   ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary/50'
+                  : 'bg-background border-border text-foreground hover:bg-muted'
               }`}
             >
               ☀️ Day
             </button>
             <button
+              type="button"
               onClick={() => setLandingType('night')}
+              disabled={addFlightEntry.isPending}
               className={`flex-1 h-11 rounded-lg border text-sm font-medium transition-colors ${
                 landingType === 'night'
                   ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-card border-border text-muted-foreground hover:text-foreground hover:border-primary/50'
+                  : 'bg-background border-border text-foreground hover:bg-muted'
               }`}
             >
               🌙 Night
@@ -287,44 +304,33 @@ export default function FlightLogEntryPage() {
 
         {/* Landing Count */}
         <div className="space-y-1.5">
-          <Label htmlFor="landing-count">Landing Count</Label>
+          <Label htmlFor="landingCount">Number of Landings</Label>
           <Input
-            id="landing-count"
+            id="landingCount"
             type="number"
             min="1"
             value={landingCount}
-            onChange={(e) => setLandingCount(e.target.value)}
+            onChange={(e) => { setLandingCount(e.target.value); setFormError(null); }}
             className="h-11"
+            disabled={addFlightEntry.isPending}
           />
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-3 pt-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate({ to: '/flight-records' })}
-            className="flex-1 h-11"
-          >
-            View Records
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={addFlightEntry.isPending}
-            className="flex-1 h-11 font-display font-semibold"
-          >
-            {addFlightEntry.isPending ? (
-              <span className="flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                Saving...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <Save className="w-4 h-4" />
-                Save Entry
-              </span>
-            )}
-          </Button>
-        </div>
+        {/* Save button */}
+        <Button
+          onClick={handleSave}
+          disabled={addFlightEntry.isPending}
+          className="w-full h-12 text-base font-display"
+        >
+          {addFlightEntry.isPending ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Saving…
+            </>
+          ) : (
+            'Save Flight Entry'
+          )}
+        </Button>
       </div>
     </div>
   );

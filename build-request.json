@@ -1,13 +1,13 @@
 {
   "kind": "build_request",
-  "title": "Fix flight record update, edit, and delete operations",
+  "title": "Fix Flight Record Update and Delete Operations",
   "projectName": "FlightLog",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix the backend updateFlightEntry function in the Motoko actor so that edits to an existing flight log entry are correctly persisted and returned without error.",
-      "target": "backend",
+      "text": "Fix the edit/update mutation for flight log entries so that submitting the EditFlightEntryModal successfully updates the record in the backend and reflects the change in the UI without errors.",
+      "target": "both",
       "source": {
         "messageIds": [
           "msg-4"
@@ -17,14 +17,34 @@
         ]
       },
       "acceptanceCriteria": [
-        "Calling updateFlightEntry with valid parameters updates the stored entry and returns the updated record.",
-        "No error or null is returned when a valid flight entry ID and updated fields are provided.",
-        "Updated values are reflected in subsequent getFlightEntries calls."
+        "Opening the edit modal for a flight entry pre-populates all fields correctly",
+        "Submitting the edit form calls the backend update function with the correct entry ID and updated data",
+        "After a successful update, the flight records table reflects the new values immediately",
+        "No console errors or unhandled rejections occur during the edit flow"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Fix the deleteFlightEntry backend function so that a flight log entry is correctly removed from storage when the delete action is triggered.",
+      "text": "Fix the delete operation for flight log entries so that confirming deletion in the FlightRecordsTable confirmation dialog successfully removes the record from the backend and updates the table.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "Flight record please update and change and delete not working please work"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Clicking the delete action on a flight entry opens the confirmation dialog",
+        "Confirming deletion calls the backend delete function with the correct entry ID",
+        "The deleted entry is removed from the flight records table immediately after confirmation",
+        "No console errors or unhandled rejections occur during the delete flow"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Audit and fix the backend Motoko actor flight log entry update and delete functions to ensure they correctly identify entries by ID, apply changes, and return appropriate success/error responses.",
       "target": "backend",
       "source": {
         "messageIds": [
@@ -35,58 +55,21 @@
         ]
       },
       "acceptanceCriteria": [
-        "Calling deleteFlightEntry with a valid entry ID removes the entry from the store.",
-        "The deleted entry no longer appears in subsequent getFlightEntries calls.",
-        "Attempting to delete a non-existent entry returns an appropriate error variant without crashing."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Fix the useEditFlightEntry mutation hook in the frontend so that submitting the EditFlightEntryModal correctly calls the backend updateFlightEntry function, serializes all field values properly, and invalidates the flight entries query cache on success.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Flight record please update and change and delete not working please work"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Submitting the edit modal sends all updated field values to the backend without serialization errors.",
-        "On successful update, the flight records table reflects the new values without requiring a page reload.",
-        "A success toast notification is displayed after a successful update.",
-        "An error toast is displayed if the update fails."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Fix the delete mutation hook and confirmation dialog in FlightRecordsTable so that confirming deletion correctly calls the backend deleteFlightEntry function and removes the entry from the displayed table.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Flight record please update and change and delete not working please work"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Clicking the delete action and confirming in the alert dialog triggers the deleteFlightEntry backend call.",
-        "The deleted row is removed from the table immediately after a successful delete.",
-        "A success toast notification is displayed after a successful delete.",
-        "An error toast is displayed if the delete fails."
+        "The update flight entry function locates the correct entry by ID and persists all changed fields",
+        "The delete flight entry function locates the correct entry by ID and removes it from stable storage",
+        "Both functions return a clear error variant when the entry ID is not found",
+        "Role-based access control is respected for both update and delete operations"
       ]
     }
   ],
   "constraints": [
-    "Do not change the flight entry data model or schema.",
-    "Do not alter immutable frontend paths (hooks/useInternetIdentity.ts, hooks/useActor.ts, main.tsx, components/ui)."
+    "Do not change the overall flight log data model or schema",
+    "Do not modify files listed in frontend.immutablePaths"
   ],
   "nonGoals": [
-    "Adding new flight entry fields or changing the form layout.",
-    "Modifying any other CRUD operations unrelated to flight entries.",
-    "Changing authentication or authorization logic."
+    "Adding new flight record fields or form inputs",
+    "Redesigning the FlightRecordsTable UI layout",
+    "Changing authentication or user profile logic"
   ],
   "imageRequirements": {
     "required": [],

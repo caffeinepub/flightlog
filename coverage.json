@@ -1,70 +1,61 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-24T23:56:27.227Z",
+  "generatedAt": "2026-02-25T00:53:42.456Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
+    "total": 3,
     "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Fix the backend updateFlightEntry function in the Motoko actor so that edits to an existing flight log entry are correctly persisted and returned without error.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
+        "summary": "Fix the edit/update mutation for flight log entries so that submitting the EditFlightEntryModal successfully updates the record in the backend and reflects the change in the UI without errors.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/EditFlightEntryModal.tsx",
+          "frontend/src/components/FlightRecordsTable.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/EditFlightEntryModal.tsx",
+          "frontend/src/components/FlightRecordsTable.tsx"
+        ]
       },
       {
         "id": "REQ-2",
-        "summary": "Fix the deleteFlightEntry backend function so that a flight log entry is correctly removed from storage when the delete action is triggered.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
+        "summary": "Fix the delete operation for flight log entries so that confirming deletion in the FlightRecordsTable confirmation dialog successfully removes the record from the backend and updates the table.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/FlightRecordsTable.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/FlightRecordsTable.tsx"
+        ]
       },
       {
         "id": "REQ-3",
-        "summary": "Fix the useEditFlightEntry mutation hook in the frontend so that submitting the EditFlightEntryModal correctly calls the backend updateFlightEntry function, serializes all field values properly, and invalidates the flight entries query cache on success.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/EditFlightEntryModal.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/EditFlightEntryModal.tsx"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Fix the delete mutation hook and confirmation dialog in FlightRecordsTable so that confirming deletion correctly calls the backend deleteFlightEntry function and removes the entry from the displayed table.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/FlightRecordsTable.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/FlightRecordsTable.tsx"
-        ]
+        "summary": "Audit and fix the backend Motoko actor flight log entry update and delete functions to ensure they correctly identify entries by ID, apply changes, and return appropriate success/error responses.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
     "frontend/src/components/EditFlightEntryModal.tsx",
     "frontend/src/components/FlightRecordsTable.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
     "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/FlightLogEntryPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

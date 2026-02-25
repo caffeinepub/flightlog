@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { calcFlightTime, dateStringToEpochBigInt } from '../utils/timeCalculations';
+import { calcFlightTime } from '../utils/timeCalculations';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
 interface EditFlightEntryModalProps {
@@ -105,7 +105,8 @@ export default function EditFlightEntryModal({ open, onOpenChange, entry }: Edit
 
     const updatedEntry: FlightEntry = {
       date: date,
-      dateEpoch: dateStringToEpochBigInt(date),
+      // Preserve the original dateEpoch (which IS the storage key for new entries)
+      dateEpoch: entry.dateEpoch,
       student: student,
       instructor: instructor,
       aircraft: aircraft,
@@ -120,7 +121,9 @@ export default function EditFlightEntryModal({ open, onOpenChange, entry }: Edit
 
     try {
       await editFlightEntry.mutateAsync({
-        entryId: entry.id,
+        // Use entry.dateEpoch as the storage key (id) — this works for entries
+        // added with the updated FlightLogEntryPage that sets dateEpoch = Date.now() in ns
+        entryId: entry.dateEpoch,
         updatedEntry,
       });
       // Toast is handled in the mutation's onSuccess
@@ -246,25 +249,38 @@ export default function EditFlightEntryModal({ open, onOpenChange, entry }: Edit
           {/* Flight Type */}
           <div className="space-y-1.5">
             <Label>Flight Type</Label>
-            <Select
-              value={flightType}
-              onValueChange={(v) => setFlightType(v as 'solo' | 'dual')}
-              disabled={editFlightEntry.isPending}
-            >
-              <SelectTrigger className="h-11">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="dual">Dual</SelectItem>
-                <SelectItem value="solo">Solo</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setFlightType('dual')}
+                disabled={editFlightEntry.isPending}
+                className={`flex-1 h-11 rounded-lg border text-sm font-medium transition-colors ${
+                  flightType === 'dual'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background border-border text-foreground hover:bg-muted'
+                }`}
+              >
+                Dual
+              </button>
+              <button
+                type="button"
+                onClick={() => setFlightType('solo')}
+                disabled={editFlightEntry.isPending}
+                className={`flex-1 h-11 rounded-lg border text-sm font-medium transition-colors ${
+                  flightType === 'solo'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background border-border text-foreground hover:bg-muted'
+                }`}
+              >
+                Solo
+              </button>
+            </div>
           </div>
 
           {/* Times */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="edit-takeoff">Takeoff Time (HH:MM)</Label>
+              <Label htmlFor="edit-takeoff">Takeoff (HH:MM)</Label>
               <Input
                 id="edit-takeoff"
                 type="text"
@@ -276,7 +292,7 @@ export default function EditFlightEntryModal({ open, onOpenChange, entry }: Edit
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="edit-landing">Landing Time (HH:MM)</Label>
+              <Label htmlFor="edit-landing">Landing (HH:MM)</Label>
               <Input
                 id="edit-landing"
                 type="text"
@@ -287,46 +303,57 @@ export default function EditFlightEntryModal({ open, onOpenChange, entry }: Edit
                 disabled={editFlightEntry.isPending}
               />
             </div>
+            <div className="space-y-1.5">
+              <Label>Total Time</Label>
+              <div className="h-11 flex items-center px-3 rounded-lg bg-muted border border-border text-sm font-bold text-primary">
+                {totalFlightTime}
+              </div>
+            </div>
           </div>
 
-          {/* Total Flight Time (computed) */}
+          {/* Landing Type */}
           <div className="space-y-1.5">
-            <Label>Total Flight Time</Label>
-            <div className="h-11 px-3 flex items-center rounded-md border border-border bg-muted/50 text-sm font-mono font-bold text-primary">
-              {totalFlightTime}
+            <Label>Landing Type</Label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setLandingType('day')}
+                disabled={editFlightEntry.isPending}
+                className={`flex-1 h-11 rounded-lg border text-sm font-medium transition-colors ${
+                  landingType === 'day'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background border-border text-foreground hover:bg-muted'
+                }`}
+              >
+                ☀️ Day
+              </button>
+              <button
+                type="button"
+                onClick={() => setLandingType('night')}
+                disabled={editFlightEntry.isPending}
+                className={`flex-1 h-11 rounded-lg border text-sm font-medium transition-colors ${
+                  landingType === 'night'
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background border-border text-foreground hover:bg-muted'
+                }`}
+              >
+                🌙 Night
+              </button>
             </div>
           </div>
 
-          {/* Landing Type & Count */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Landing Type</Label>
-              <Select
-                value={landingType}
-                onValueChange={(v) => setLandingType(v as 'day' | 'night')}
-                disabled={editFlightEntry.isPending}
-              >
-                <SelectTrigger className="h-11">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="day">☀️ Day</SelectItem>
-                  <SelectItem value="night">🌙 Night</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="edit-landing-count">Landing Count</Label>
-              <Input
-                id="edit-landing-count"
-                type="number"
-                min="1"
-                value={landingCount}
-                onChange={(e) => { setLandingCount(e.target.value); setFormError(null); }}
-                className="h-11"
-                disabled={editFlightEntry.isPending}
-              />
-            </div>
+          {/* Landing Count */}
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-landingCount">Number of Landings</Label>
+            <Input
+              id="edit-landingCount"
+              type="number"
+              min="1"
+              value={landingCount}
+              onChange={(e) => { setLandingCount(e.target.value); setFormError(null); }}
+              className="h-11"
+              disabled={editFlightEntry.isPending}
+            />
           </div>
         </div>
 

@@ -1,17 +1,24 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-24T23:56:27.224Z",
-  "summary": "The diff addresses all four requirements. REQ-3 and REQ-4 (frontend fixes) are clearly implemented in useQueries.ts, FlightRecordsTable.tsx, and EditFlightEntryModal.tsx. The backend file (backend/main.mo) is modified, but the diff is truncated so full verification of REQ-1 and REQ-2 backend fixes is limited. Based on available evidence, the fixes appear to be in place. No hallucinated features are detected.",
-  "missing_requirements": [],
+  "generatedAt": "2026-02-25T00:53:42.453Z",
+  "summary": "The diff addresses REQ-1 (edit/update modal) and REQ-2 (delete operation) through frontend changes in EditFlightEntryModal.tsx, FlightRecordsTable.tsx, useQueries.ts, and FlightLogEntryPage.tsx. REQ-3 requires backend Motoko actor changes, but no backend files are present in the diff.",
+  "missing_requirements": [
+    {
+      "id": "REQ-3",
+      "requirement": "Audit and fix the backend Motoko actor flight log entry update and delete functions to ensure they correctly identify entries by ID, apply changes, and return appropriate success/error responses.",
+      "reason": "No backend Motoko files (.mo) appear in the diff. The requirement explicitly calls for changes to the backend actor's update and delete functions, including correct ID lookup, persisting changed fields, removing entries from stable storage, returning error variants for missing IDs, and respecting role-based access control. None of these backend-side fixes are evidenced in the diff.",
+      "evidence": []
+    }
+  ],
   "hallucinated_features": [],
-  "confidence": 0.78,
+  "confidence": 0.85,
   "changed_files": [
-    "backend/main.mo",
     "frontend-file-summaries.txt",
     "frontend/src/components/EditFlightEntryModal.tsx",
     "frontend/src/components/FlightRecordsTable.tsx",
     "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/FlightLogEntryPage.tsx",
     "project_state.json"
   ]
 }

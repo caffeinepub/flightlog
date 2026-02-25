@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Flight record management app with update, change, and delete functionality for flight entries.",
+  "summary": "Flight record management app where update, edit, and delete functionality for flight records needs to be fixed.",
   "architectural_notes": [],
   "known_issues": [
     "Flight record update, change, and delete operations are not working correctly"
@@ -9,36 +9,28 @@
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-fix-the-useeditflightentry-mutation-hook-in-the-frontend-so-that-submitting-the-editflightentrymodal-correctly-calls-the-backend-updateflightentry-function-serializes-all-field-values-properly-and-invalidates-the-flight-entries-query-cache-on-success",
-      "title": "Fix the useEditFlightEntry mutation hook in the frontend so that submitting the EditFlightEntryModal correctly calls the backend updateFlightEntry function, serializes all field values properly, and invalidates the flight entries query cache on success.",
+      "id": "feature-fix-the-edit-update-mutation-for-flight-log-entries-so-that-submitting-the-editflightentrymodal-successfully-updates-the-record-in-the-backend-and-reflects-the-change-in-the-ui-without-errors",
+      "title": "Fix the edit/update mutation for flight log entries so that submitting the EditFlightEntryModal successfully updates the record in the backend and reflects the change in the UI without errors.",
       "reqIds": [
-        "REQ-3"
+        "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-fix-the-delete-mutation-hook-and-confirmation-dialog-in-flightrecordstable-so-that-confirming-deletion-correctly-calls-the-backend-deleteflightentry-function-and-removes-the-entry-from-the-displayed-table",
-      "title": "Fix the delete mutation hook and confirmation dialog in FlightRecordsTable so that confirming deletion correctly calls the backend deleteFlightEntry function and removes the entry from the displayed table.",
+      "id": "feature-fix-the-delete-operation-for-flight-log-entries-so-that-confirming-deletion-in-the-flightrecordstable-confirmation-dialog-successfully-removes-the-record-from-the-backend-and-updates-the-table",
+      "title": "Fix the delete operation for flight log entries so that confirming deletion in the FlightRecordsTable confirmation dialog successfully removes the record from the backend and updates the table.",
       "reqIds": [
-        "REQ-4"
+        "REQ-2"
       ],
       "version": 1
     }
   ],
   "new_feature_requests": [
     {
-      "id": "AR-1",
-      "summary": "Fix the backend updateFlightEntry function in the Motoko actor so that edits to an existing flight log entry are correctly persisted and returned without error.",
+      "id": "AR-3",
+      "summary": "Audit and fix the backend Motoko actor flight log entry update and delete functions to ensure they correctly identify entries by ID, apply changes, and return appropriate success/error responses.",
       "reqIds": [
-        "REQ-1"
-      ],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Fix the deleteFlightEntry backend function so that a flight log entry is correctly removed from storage when the delete action is triggered.",
-      "reqIds": [
-        "REQ-2"
+        "REQ-3"
       ],
       "status": "pending"
     }

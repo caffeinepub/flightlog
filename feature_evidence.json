@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-useeditflightentry-mutation-hook-in-the-frontend-so-that-submitting-the-editflightentrymodal-correctly-calls-the-backend-updateflightentry-function-serializes-all-field-values-properly-and-invalidates-the-flight-entries-query-cache-on-success",
-      "featureTitle": "Fix the useEditFlightEntry mutation hook in the frontend so that submitting the EditFlightEntryModal correctly calls the backend updateFlightEntry function, serializes all field values properly, and invalidates the flight entries query cache on success.",
+      "featureId": "feature-fix-the-edit-update-mutation-for-flight-log-entries-so-that-submitting-the-editflightentrymodal-successfully-updates-the-record-in-the-backend-and-reflects-the-change-in-the-ui-without-errors",
+      "featureTitle": "Fix the edit/update mutation for flight log entries so that submitting the EditFlightEntryModal successfully updates the record in the backend and reflects the change in the UI without errors.",
       "files": [
         "frontend/src/components/EditFlightEntryModal.tsx",
+        "frontend/src/components/FlightRecordsTable.tsx",
         "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
@@ -17,13 +18,13 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-3"
+        "REQ-1"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-fix-the-delete-mutation-hook-and-confirmation-dialog-in-flightrecordstable-so-that-confirming-deletion-correctly-calls-the-backend-deleteflightentry-function-and-removes-the-entry-from-the-displayed-table",
-      "featureTitle": "Fix the delete mutation hook and confirmation dialog in FlightRecordsTable so that confirming deletion correctly calls the backend deleteFlightEntry function and removes the entry from the displayed table.",
+      "featureId": "feature-fix-the-delete-operation-for-flight-log-entries-so-that-confirming-deletion-in-the-flightrecordstable-confirmation-dialog-successfully-removes-the-record-from-the-backend-and-updates-the-table",
+      "featureTitle": "Fix the delete operation for flight log entries so that confirming deletion in the FlightRecordsTable confirmation dialog successfully removes the record from the backend and updates the table.",
       "files": [
         "frontend/src/components/FlightRecordsTable.tsx",
         "frontend/src/hooks/useQueries.ts"
@@ -37,7 +38,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-4"
+        "REQ-2"
       ],
       "confidence": "high"
     }

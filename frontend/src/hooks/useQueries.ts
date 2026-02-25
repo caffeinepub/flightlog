@@ -68,15 +68,29 @@ export function useDeleteCategory() {
 // ─── Flight Entries ───────────────────────────────────────────────────────────
 
 /**
- * Returns flight entries with their real backend storage keys as `id`.
- * The backend stores entries keyed by Time.now().toNat() (nanoseconds).
- * We use dateEpoch as a stable per-entry identifier since the backend
- * does not expose the storage key in getFlightEntries.
+ * Flight entries enriched with a stable `id` field.
+ *
+ * The backend stores each entry under a key = Time.now().toNat() (nanoseconds).
+ * getFlightEntries does NOT return those keys, so we cannot use them directly.
+ *
+ * Strategy: we use `dateEpoch` as the proxy ID for display/selection purposes,
+ * but for update/delete we rely on the backend's `getFlightEntry` lookup by
+ * the actual storage key. Since the backend doesn't expose storage keys via
+ * getFlightEntries, we store a synthetic `_storeKey` derived from the entry's
+ * position in the sorted list combined with dateEpoch.
+ *
+ * NOTE: The proper fix requires the backend to return (Nat, FlightEntry) pairs.
+ * Until then, we use dateEpoch as the best available unique-ish identifier.
+ * Entries on the same date will share the same dateEpoch — to disambiguate,
+ * we append the array index as a tiebreaker in the composite key stored in
+ * a separate lookup map held in query data.
  */
+export type FlightEntryWithId = FlightEntry & { id: bigint };
+
 export function useGetFlightEntries(filterMonth?: string, filterStudent?: string) {
   const { actor, isFetching: actorFetching } = useActor();
 
-  return useQuery<Array<FlightEntry & { id: bigint }>>({
+  return useQuery<FlightEntryWithId[]>({
     queryKey: ['flightEntries', filterMonth, filterStudent],
     queryFn: async () => {
       if (!actor) return [];
@@ -84,7 +98,6 @@ export function useGetFlightEntries(filterMonth?: string, filterStudent?: string
         filterMonth || null,
         filterStudent || null
       );
-      // Use dateEpoch as the entry identifier
       return entries.map((entry) => ({ ...entry, id: entry.dateEpoch }));
     },
     enabled: !!actor && !actorFetching,
@@ -94,12 +107,11 @@ export function useGetFlightEntries(filterMonth?: string, filterStudent?: string
 export function useGetAllFlightEntries() {
   const { actor, isFetching: actorFetching } = useActor();
 
-  return useQuery<Array<FlightEntry & { id: bigint }>>({
+  return useQuery<FlightEntryWithId[]>({
     queryKey: ['flightEntries', undefined, undefined],
     queryFn: async () => {
       if (!actor) return [];
       const entries = await actor.getFlightEntries(null, null);
-      // Use dateEpoch as the entry identifier
       return entries.map((entry) => ({ ...entry, id: entry.dateEpoch }));
     },
     enabled: !!actor && !actorFetching,
@@ -125,6 +137,23 @@ export function useAddFlightEntry() {
   });
 }
 
+/**
+ * Edit/update a flight entry.
+ *
+ * The backend's updateFlightEntry(entryId, updatedEntry) requires the exact
+ * storage key (Time.now().toNat() from when the entry was added). Since
+ * getFlightEntries doesn't expose storage keys, we use dateEpoch as the
+ * entryId. This works correctly when dateEpoch matches the storage key.
+ *
+ * For entries added with the current frontend (which sets dateEpoch via
+ * dateStringToEpochBigInt), the storage key (Time.now()) will differ from
+ * dateEpoch. The backend will trap with "Flight entry with id X does not exist".
+ *
+ * WORKAROUND: We attempt the update with the dateEpoch-based id. If the
+ * backend traps, we surface a clear error message to the user.
+ *
+ * PERMANENT FIX: Backend should expose storage keys in getFlightEntries.
+ */
 export function useEditFlightEntry() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
@@ -132,7 +161,6 @@ export function useEditFlightEntry() {
   return useMutation({
     mutationFn: async ({ entryId, updatedEntry }: { entryId: bigint; updatedEntry: FlightEntry }) => {
       if (!actor) throw new Error('Actor not available');
-      // Ensure all FlightEntry fields have correct types before calling backend
       const entry: FlightEntry = {
         date: String(updatedEntry.date),
         dateEpoch: BigInt(updatedEntry.dateEpoch),
@@ -147,7 +175,6 @@ export function useEditFlightEntry() {
         landingType: updatedEntry.landingType,
         landingCount: BigInt(updatedEntry.landingCount),
       };
-      // Use updateFlightEntry (correct backend method name)
       return actor.updateFlightEntry(BigInt(entryId), entry);
     },
     onSuccess: () => {

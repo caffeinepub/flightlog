@@ -52,7 +52,8 @@ export default function FlightRecordsTable({ entries }: FlightRecordsTableProps)
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
     try {
-      await deleteFlightEntry.mutateAsync(deleteTarget.id);
+      // Use dateEpoch as the storage key — this matches the key set in FlightLogEntryPage
+      await deleteFlightEntry.mutateAsync(deleteTarget.dateEpoch);
       // Toast is handled in the mutation's onSuccess
     } catch {
       // Toast is handled in the mutation's onError
@@ -93,7 +94,7 @@ export default function FlightRecordsTable({ entries }: FlightRecordsTableProps)
           </TableHeader>
           <TableBody>
             {entries.map((entry, idx) => (
-              <TableRow key={`${entry.id}-${idx}`} className="hover:bg-muted/30">
+              <TableRow key={`${String(entry.dateEpoch)}-${idx}`} className="hover:bg-muted/30">
                 <TableCell className="whitespace-nowrap text-xs">{entry.date}</TableCell>
                 <TableCell className="whitespace-nowrap text-xs font-medium">{entry.student}</TableCell>
                 <TableCell className="whitespace-nowrap text-xs">{entry.instructor}</TableCell>
@@ -133,7 +134,7 @@ export default function FlightRecordsTable({ entries }: FlightRecordsTableProps)
                       onClick={() => handleDeleteClick(entry)}
                       disabled={deleteFlightEntry.isPending}
                     >
-                      {deleteFlightEntry.isPending && deleteTarget?.id === entry.id ? (
+                      {deleteFlightEntry.isPending && deleteTarget?.dateEpoch === entry.dateEpoch ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
                         <Trash2 className="w-3.5 h-3.5" />
@@ -179,7 +180,7 @@ export default function FlightRecordsTable({ entries }: FlightRecordsTableProps)
       </AlertDialog>
 
       <EditFlightEntryModal
-        key={editEntry ? String(editEntry.id) : 'none'}
+        key={editEntry ? String(editEntry.dateEpoch) : 'none'}
         open={editOpen}
         onOpenChange={setEditOpen}
         entry={editEntry}
