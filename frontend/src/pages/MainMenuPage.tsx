@@ -1,145 +1,159 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGetCallerUserProfile } from '../hooks/useGetCallerUserProfile';
-import { useGetFlightEntries } from '../hooks/useQueries';
+import { useTodayFlightHours, useMonthFlightHours } from '../hooks/useQueries';
 import {
-  Plane,
-  Users,
-  UserCheck,
-  Wrench,
-  BookOpen,
-  ClipboardList,
-  ChevronRight,
+  Plane, BookOpen, Users, UserCheck, Wrench, GraduationCap, BarChart2, Clock, Calendar
 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { formatHours } from '../utils/timeCalculations';
 
-const NAV_ITEMS = [
+interface NavTile {
+  path: string;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  color: string;
+}
+
+const navTiles: NavTile[] = [
   {
-    to: '/flight-log',
-    icon: Plane,
-    label: 'New Flight Log',
+    path: '/flight-log',
+    label: 'Flight Log',
     description: 'Record a new flight entry',
-    color: 'oklch(0.62 0.18 230)',
-    bg: 'oklch(0.62 0.18 230 / 0.12)',
+    icon: <Plane className="w-6 h-6" />,
+    color: 'text-sky-400 bg-sky-400/10',
   },
   {
-    to: '/records',
-    icon: ClipboardList,
+    path: '/flight-records',
     label: 'Flight Records',
-    description: 'View and filter all flight logs',
-    color: 'oklch(0.70 0.15 180)',
-    bg: 'oklch(0.70 0.15 180 / 0.12)',
+    description: 'View and manage all flights',
+    icon: <BookOpen className="w-6 h-6" />,
+    color: 'text-blue-400 bg-blue-400/10',
   },
   {
-    to: '/students',
-    icon: Users,
+    path: '/students',
     label: 'Students',
     description: 'Manage student roster',
-    color: 'oklch(0.75 0.15 140)',
-    bg: 'oklch(0.75 0.15 140 / 0.12)',
+    icon: <GraduationCap className="w-6 h-6" />,
+    color: 'text-purple-400 bg-purple-400/10',
   },
   {
-    to: '/instructors',
-    icon: UserCheck,
+    path: '/instructors',
     label: 'Instructors',
     description: 'Manage instructor roster',
-    color: 'oklch(0.72 0.18 60)',
-    bg: 'oklch(0.72 0.18 60 / 0.12)',
+    icon: <UserCheck className="w-6 h-6" />,
+    color: 'text-amber-400 bg-amber-400/10',
   },
   {
-    to: '/aircraft',
-    icon: Wrench,
+    path: '/aircraft',
     label: 'Aircraft',
     description: 'Manage aircraft fleet',
-    color: 'oklch(0.68 0.2 25)',
-    bg: 'oklch(0.68 0.2 25 / 0.12)',
+    icon: <Wrench className="w-6 h-6" />,
+    color: 'text-orange-400 bg-orange-400/10',
   },
   {
-    to: '/exercises',
-    icon: BookOpen,
+    path: '/exercises',
     label: 'Exercises',
     description: 'Manage training exercises',
-    color: 'oklch(0.65 0.15 280)',
-    bg: 'oklch(0.65 0.15 280 / 0.12)',
+    icon: <BookOpen className="w-6 h-6" />,
+    color: 'text-teal-400 bg-teal-400/10',
+  },
+  {
+    path: '/student-report',
+    label: 'Student Report',
+    description: 'Total hours per student',
+    icon: <BarChart2 className="w-6 h-6" />,
+    color: 'text-green-400 bg-green-400/10',
   },
 ];
 
 export default function MainMenuPage() {
   const navigate = useNavigate();
-  const { identity } = useInternetIdentity();
-  const { data: userProfile } = useGetCallerUserProfile();
-  const { data: flightEntries = [] } = useGetFlightEntries();
+  const { data: userProfile, isLoading: profileLoading } = useGetCallerUserProfile();
+  const { data: todayHours, isLoading: todayLoading } = useTodayFlightHours();
+  const { data: monthHours, isLoading: monthLoading } = useMonthFlightHours();
 
-  const today = new Date().toISOString().slice(0, 10);
-  const todayFlights = flightEntries.filter(e => e.date === today).length;
+  const now = new Date();
+  const monthName = now.toLocaleString('default', { month: 'long', year: 'numeric' });
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 animate-fade-in">
-      {/* Welcome Banner */}
-      <div className="aviation-card rounded-2xl p-6 mb-8 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: 'url(/assets/generated/login-bg.dim_1280x800.png)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        />
-        <div className="relative z-10 flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-wide text-foreground">
-              {userProfile ? `Welcome back, ${userProfile.name}` : 'Welcome to FlightLog Pro'}
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
+    <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      {/* Welcome banner */}
+      <div className="bg-gradient-to-r from-primary/20 to-sky-500/10 border border-primary/30 rounded-2xl p-6">
+        <div className="flex items-center gap-3 mb-1">
+          <Plane className="w-6 h-6 text-primary" />
+          <h1 className="font-display text-2xl font-bold text-foreground">
+            {profileLoading ? (
+              <Skeleton className="h-7 w-40 inline-block" />
+            ) : (
+              `Welcome, ${userProfile?.name || 'Pilot'}!`
+            )}
+          </h1>
+        </div>
+        <p className="text-muted-foreground text-sm ml-9">
+          {now.toLocaleDateString('default', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        </p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+          <div className="w-10 h-10 bg-sky-400/10 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Clock className="w-5 h-5 text-sky-400" />
           </div>
-          <div className="flex gap-4">
-            <div className="text-center px-4 py-2 rounded-xl"
-              style={{ background: 'oklch(0.62 0.18 230 / 0.12)', border: '1px solid oklch(0.62 0.18 230 / 0.2)' }}
-            >
-              <div className="font-display text-2xl font-bold" style={{ color: 'oklch(0.75 0.18 230)' }}>
-                {flightEntries.length}
-              </div>
-              <div className="text-xs text-muted-foreground">Total Flights</div>
-            </div>
-            <div className="text-center px-4 py-2 rounded-xl"
-              style={{ background: 'oklch(0.70 0.15 180 / 0.12)', border: '1px solid oklch(0.70 0.15 180 / 0.2)' }}
-            >
-              <div className="font-display text-2xl font-bold" style={{ color: 'oklch(0.72 0.15 180)' }}>
-                {todayFlights}
-              </div>
-              <div className="text-xs text-muted-foreground">Today</div>
-            </div>
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Today's Hours</p>
+            {todayLoading ? (
+              <Skeleton className="h-6 w-16 mt-0.5" />
+            ) : (
+              <p className="font-display font-bold text-xl text-foreground">
+                {formatHours(todayHours ?? 0)}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Calendar className="w-5 h-5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">{monthName}</p>
+            {monthLoading ? (
+              <Skeleton className="h-6 w-16 mt-0.5" />
+            ) : (
+              <p className="font-display font-bold text-xl text-foreground">
+                {formatHours(monthHours ?? 0)}
+              </p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Navigation Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {NAV_ITEMS.map(({ to, icon: Icon, label, description, color, bg }) => (
-          <button
-            key={to}
-            onClick={() => navigate({ to })}
-            className="aviation-card rounded-xl p-5 text-left group transition-all duration-200 hover:scale-[1.02] hover:shadow-lg min-h-[44px] flex items-center gap-4"
-            style={{
-              border: `1px solid ${color.replace(')', ' / 0.2)')}`,
-            }}
-          >
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110"
-              style={{ background: bg }}
+      {/* Navigation grid */}
+      <div>
+        <h2 className="font-display text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Quick Access
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {navTiles.map((tile) => (
+            <button
+              key={tile.path}
+              onClick={() => navigate({ to: tile.path })}
+              className="bg-card border border-border rounded-xl p-4 text-left hover:border-primary/50 hover:bg-card/80 transition-all group min-h-[80px] flex flex-col gap-2"
             >
-              <Icon size={22} style={{ color }} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-display text-base font-semibold tracking-wide text-foreground">
-                {label}
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${tile.color}`}>
+                {tile.icon}
               </div>
-              <div className="text-xs text-muted-foreground mt-0.5 truncate">
-                {description}
+              <div>
+                <p className="font-display font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
+                  {tile.label}
+                </p>
+                <p className="text-xs text-muted-foreground leading-tight">{tile.description}</p>
               </div>
-            </div>
-            <ChevronRight size={16} className="text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
-          </button>
-        ))}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

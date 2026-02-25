@@ -1,81 +1,89 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { useSaveCallerUserProfile } from '../hooks/useQueries';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useSaveCallerUserProfile } from '../hooks/useQueries';
-import { User } from 'lucide-react';
+import { Plane } from 'lucide-react';
+import { toast } from 'sonner';
 
-interface ProfileSetupModalProps {
-  onComplete: () => void;
-}
-
-export default function ProfileSetupModal({ onComplete }: ProfileSetupModalProps) {
+export default function ProfileSetupModal() {
+  const { identity } = useInternetIdentity();
   const [name, setName] = useState('');
   const saveProfile = useSaveCallerUserProfile();
 
+  const isAuthenticated = !!identity;
+
   const handleSave = async () => {
-    if (!name.trim()) return;
+    const trimmed = name.trim();
+    if (!trimmed) {
+      toast.error('Please enter your name');
+      return;
+    }
     try {
-      await saveProfile.mutateAsync({ name: name.trim() });
-      onComplete();
+      await saveProfile.mutateAsync({ name: trimmed });
+      toast.success('Profile saved! Welcome aboard.');
     } catch (err) {
-      console.error('Failed to save profile:', err);
+      toast.error('Failed to save profile. Please try again.');
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSave();
+  };
+
   return (
-    <Dialog open={true}>
+    <Dialog open={isAuthenticated} onOpenChange={() => {}}>
       <DialogContent
-        className="sm:max-w-md border-border"
-        style={{
-          background: 'linear-gradient(135deg, oklch(0.18 0.03 240) 0%, oklch(0.16 0.025 245) 100%)',
-        }}
+        className="sm:max-w-md"
         onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{ background: 'oklch(0.62 0.18 230 / 0.15)', border: '1px solid oklch(0.62 0.18 230 / 0.3)' }}
-            >
-              <User size={20} style={{ color: 'oklch(0.62 0.18 230)' }} />
+            <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+              <Plane className="w-5 h-5 text-primary" />
             </div>
-            <DialogTitle className="font-display text-xl tracking-wide">Welcome to FlightLog Pro</DialogTitle>
+            <DialogTitle className="font-display text-xl">Welcome to Flight Log</DialogTitle>
           </div>
-          <DialogDescription className="text-muted-foreground">
-            Please enter your name to set up your pilot profile. This will be used to identify you in the system.
+          <DialogDescription>
+            Please enter your name to set up your pilot profile. This will be displayed throughout the app.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-2">
+        <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label htmlFor="pilot-name" className="text-sm font-medium">
-              Your Name
-            </Label>
+            <Label htmlFor="pilot-name">Your Name</Label>
             <Input
               id="pilot-name"
               placeholder="e.g. John Smith"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-              className="min-h-[44px] bg-input border-border"
+              onKeyDown={handleKeyDown}
               autoFocus
+              className="h-11"
             />
           </div>
 
           <Button
             onClick={handleSave}
-            disabled={!name.trim() || saveProfile.isPending}
-            className="w-full min-h-[44px] aviation-btn-primary"
-            style={{ background: undefined }}
+            disabled={saveProfile.isPending || !name.trim()}
+            className="w-full h-11 font-display font-semibold"
           >
             {saveProfile.isPending ? (
               <span className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                 Saving...
               </span>
             ) : (
-              'Set Up Profile'
+              'Save Profile & Continue'
             )}
           </Button>
         </div>

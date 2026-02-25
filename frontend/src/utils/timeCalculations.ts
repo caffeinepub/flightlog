@@ -1,60 +1,41 @@
 /**
- * Calculates total flight time from takeoff and landing times.
- * Handles times that cross midnight.
- * @param takeoff - Time in HH:MM format
- * @param landing - Time in HH:MM format
- * @returns Total time in HH:MM format, or empty string if invalid
+ * Calculates total flight time from takeoff and landing HH:MM strings.
+ * Supports midnight crossing (landing < takeoff).
  */
 export function calcFlightTime(takeoff: string, landing: string): string {
-  if (!takeoff || !landing) return '';
+  if (!takeoff || !landing) return '0:00';
+  const [th, tm] = takeoff.split(':').map(Number);
+  const [lh, lm] = landing.split(':').map(Number);
+  if (isNaN(th) || isNaN(tm) || isNaN(lh) || isNaN(lm)) return '0:00';
 
-  const takeoffMatch = takeoff.match(/^(\d{1,2}):(\d{2})$/);
-  const landingMatch = landing.match(/^(\d{1,2}):(\d{2})$/);
+  let totalMinutes = (lh * 60 + lm) - (th * 60 + tm);
+  if (totalMinutes < 0) totalMinutes += 24 * 60; // midnight crossing
 
-  if (!takeoffMatch || !landingMatch) return '';
-
-  const takeoffHours = parseInt(takeoffMatch[1], 10);
-  const takeoffMins = parseInt(takeoffMatch[2], 10);
-  const landingHours = parseInt(landingMatch[1], 10);
-  const landingMins = parseInt(landingMatch[2], 10);
-
-  if (
-    takeoffHours > 23 || takeoffMins > 59 ||
-    landingHours > 23 || landingMins > 59
-  ) return '';
-
-  let totalMins = (landingHours * 60 + landingMins) - (takeoffHours * 60 + takeoffMins);
-
-  // Handle crossing midnight
-  if (totalMins < 0) {
-    totalMins += 24 * 60;
-  }
-
-  const hours = Math.floor(totalMins / 60);
-  const mins = totalMins % 60;
-
-  return `${hours}:${mins.toString().padStart(2, '0')}`;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}:${String(minutes).padStart(2, '0')}`;
 }
 
 /**
- * Converts a date string (YYYY-MM-DD) to epoch nanoseconds as a BigInt.
+ * Converts a YYYY-MM-DD date string to a BigInt epoch (nanoseconds).
  */
-export function dateToEpochNat(dateStr: string): bigint {
-  try {
-    const d = new Date(dateStr + 'T00:00:00Z');
-    return BigInt(d.getTime()) * BigInt(1_000_000);
-  } catch {
-    return BigInt(0);
-  }
+export function dateStringToEpochBigInt(dateStr: string): bigint {
+  const date = new Date(dateStr + 'T00:00:00Z');
+  return BigInt(date.getTime()) * BigInt(1_000_000);
 }
 
 /**
- * Formats today's date as YYYY-MM-DD.
+ * Returns today's date as a YYYY-MM-DD string.
  */
-export function todayDateString(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+export function getTodayDateString(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+/**
+ * Formats a decimal hours number as H:MM string.
+ */
+export function formatHours(hours: number): string {
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  return `${h}:${String(m).padStart(2, '0')}`;
 }

@@ -1,6 +1,9 @@
 import { RouterProvider, createRouter, createRoute, createRootRoute, Outlet, redirect } from '@tanstack/react-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from 'next-themes';
+import { Toaster } from '@/components/ui/sonner';
 import { useInternetIdentity } from './hooks/useInternetIdentity';
-import { useQueryClient } from '@tanstack/react-query';
+import { useGetCallerUserProfile } from './hooks/useGetCallerUserProfile';
 import LoginScreen from './components/LoginScreen';
 import ProfileSetupModal from './components/ProfileSetupModal';
 import Header from './components/Header';
@@ -11,15 +14,32 @@ import StudentsPage from './pages/StudentsPage';
 import InstructorsPage from './pages/InstructorsPage';
 import AircraftPage from './pages/AircraftPage';
 import ExercisesPage from './pages/ExercisesPage';
-import { Toaster } from '@/components/ui/sonner';
-import { useGetCallerUserProfile } from './hooks/useGetCallerUserProfile';
+import StudentReportPage from './pages/StudentReportPage';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 30_000,
+    },
+  },
+});
 
 function AppLayout() {
-  const { identity } = useInternetIdentity();
-  const queryClient = useQueryClient();
+  const { identity, isInitializing } = useInternetIdentity();
   const isAuthenticated = !!identity;
-
   const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted-foreground font-display">Initializing...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <LoginScreen />;
@@ -28,32 +48,28 @@ function AppLayout() {
   const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1">
         <Outlet />
       </main>
-      <footer className="border-t border-border py-4 px-6 text-center">
-        <p className="text-xs text-muted-foreground">
-          © {new Date().getFullYear()} FlightLog Pro &mdash; Built with{' '}
-          <span className="text-red-400">♥</span> using{' '}
+      <footer className="border-t border-border bg-card/50 py-4 px-4 text-center text-sm text-muted-foreground">
+        <p>
+          Built with{' '}
+          <span className="text-red-400">♥</span>{' '}
+          using{' '}
           <a
-            href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname || 'flightlog-pro')}`}
+            href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname || 'flight-log-app')}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sky-500 hover:text-sky-400 transition-colors"
+            className="text-primary hover:underline"
           >
             caffeine.ai
-          </a>
+          </a>{' '}
+          &copy; {new Date().getFullYear()}
         </p>
       </footer>
-      {showProfileSetup && (
-        <ProfileSetupModal
-          onComplete={() => {
-            queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
-          }}
-        />
-      )}
+      {showProfileSetup && <ProfileSetupModal />}
     </div>
   );
 }
@@ -76,7 +92,7 @@ const flightLogRoute = createRoute({
 
 const flightRecordsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/records',
+  path: '/flight-records',
   component: FlightRecordsPage,
 });
 
@@ -104,6 +120,12 @@ const exercisesRoute = createRoute({
   component: ExercisesPage,
 });
 
+const studentReportRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/student-report',
+  component: StudentReportPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   flightLogRoute,
@@ -112,6 +134,7 @@ const routeTree = rootRoute.addChildren([
   instructorsRoute,
   aircraftRoute,
   exercisesRoute,
+  studentReportRoute,
 ]);
 
 const router = createRouter({ routeTree });
@@ -124,9 +147,11 @@ declare module '@tanstack/react-router' {
 
 export default function App() {
   return (
-    <>
-      <RouterProvider router={router} />
-      <Toaster richColors position="top-right" theme="dark" />
-    </>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <Toaster richColors position="top-right" />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

@@ -6,26 +6,31 @@ export default function ExercisesPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 animate-fade-in">
-      <div className="page-header">
+    <div className="max-w-2xl mx-auto px-4 py-6">
+      <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => navigate({ to: '/' })}
-          className="p-2 rounded-lg hover:bg-accent transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+          className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+          aria-label="Back to dashboard"
         >
-          <ArrowLeft size={18} className="text-muted-foreground" />
+          <ArrowLeft className="w-5 h-5" />
         </button>
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-          style={{ background: 'oklch(0.65 0.15 280 / 0.15)' }}
-        >
-          <BookOpen size={18} style={{ color: 'oklch(0.65 0.15 280)' }} />
+        <div className="flex items-center gap-2">
+          <BookOpen className="w-5 h-5 text-teal-400" />
+          <h1 className="font-display text-xl font-bold text-foreground">Exercises</h1>
         </div>
-        <h1 className="page-title">Exercises</h1>
       </div>
-      <ListManager
-        categoryType="exercise"
-        title="Exercises"
-        placeholder="Enter exercise name or number"
-      />
+
+      <div className="bg-card border border-border rounded-2xl p-6">
+        <p className="text-sm text-muted-foreground mb-4">
+          Manage training exercises. Exercises added here will appear in the flight log entry form.
+        </p>
+        <ListManager
+          categoryType="exercise"
+          title="Exercises"
+          placeholder="Enter exercise name or number..."
+        />
+      </div>
     </div>
   );
 }

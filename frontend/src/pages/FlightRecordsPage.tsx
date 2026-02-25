@@ -1,139 +1,145 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useGetFlightEntries } from '../hooks/useQueries';
+import { useGetAllFlightEntries } from '../hooks/useQueries';
+import { FlightEntry } from '../backend';
 import FlightRecordsTable from '../components/FlightRecordsTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Search, RotateCcw, ClipboardList } from 'lucide-react';
+import { exportToExcel } from '../utils/excelExport';
+import { ArrowLeft, Search, X, Download, BookOpen } from 'lucide-react';
+import { toast } from 'sonner';
+
+interface FlightEntryWithId extends FlightEntry {
+  id: bigint;
+}
 
 export default function FlightRecordsPage() {
   const navigate = useNavigate();
-  const [monthInput, setMonthInput] = useState('');
-  const [studentInput, setStudentInput] = useState('');
-  const [activeMonth, setActiveMonth] = useState<string | undefined>(undefined);
-  const [activeStudent, setActiveStudent] = useState<string | undefined>(undefined);
+  const { data: allEntries, isLoading, isError } = useGetAllFlightEntries();
 
-  const { data: entries = [], isLoading } = useGetFlightEntries(activeMonth, activeStudent);
+  const [monthFilter, setMonthFilter] = useState('');
+  const [studentFilter, setStudentFilter] = useState('');
 
-  const handleSearch = () => {
-    setActiveMonth(monthInput.trim() || undefined);
-    setActiveStudent(studentInput.trim() || undefined);
-  };
+  const filteredEntries = useMemo<FlightEntryWithId[]>(() => {
+    if (!allEntries) return [];
+    return allEntries
+      .filter(entry => {
+        const monthMatch = !monthFilter || entry.date.startsWith(monthFilter.trim());
+        const studentMatch = !studentFilter ||
+          entry.student.toLowerCase().includes(studentFilter.trim().toLowerCase());
+        return monthMatch && studentMatch;
+      });
+    // allEntries already has id: bigint (dateEpoch) from useGetAllFlightEntries
+  }, [allEntries, monthFilter, studentFilter]);
 
   const handleReset = () => {
-    setMonthInput('');
-    setStudentInput('');
-    setActiveMonth(undefined);
-    setActiveStudent(undefined);
+    setMonthFilter('');
+    setStudentFilter('');
   };
 
-  const isFiltered = !!activeMonth || !!activeStudent;
+  const handleExport = () => {
+    if (filteredEntries.length === 0) {
+      toast.error('No records to export');
+      return;
+    }
+    const now = new Date();
+    const filename = `flight-log-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}.xlsx`;
+    exportToExcel(filteredEntries, filename);
+    toast.success(`Exported ${filteredEntries.length} records`);
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 animate-fade-in">
-      {/* Page Header */}
-      <div className="page-header">
+    <div className="max-w-7xl mx-auto px-4 py-6 space-y-5">
+      {/* Page header */}
+      <div className="flex items-center gap-3">
         <button
           onClick={() => navigate({ to: '/' })}
-          className="p-2 rounded-lg hover:bg-accent transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+          className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+          aria-label="Back to dashboard"
         >
-          <ArrowLeft size={18} className="text-muted-foreground" />
+          <ArrowLeft className="w-5 h-5" />
         </button>
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-          style={{ background: 'oklch(0.70 0.15 180 / 0.15)' }}
-        >
-          <ClipboardList size={18} style={{ color: 'oklch(0.70 0.15 180)' }} />
+        <div className="flex items-center gap-2">
+          <BookOpen className="w-5 h-5 text-primary" />
+          <h1 className="font-display text-xl font-bold text-foreground">Flight Records</h1>
         </div>
-        <h1 className="page-title">Flight Records</h1>
-        {entries.length > 0 && (
-          <span className="ml-auto text-sm font-medium px-3 py-1 rounded-full"
-            style={{ background: 'oklch(0.70 0.15 180 / 0.15)', color: 'oklch(0.72 0.15 180)' }}
+        <div className="ml-auto">
+          <Button
+            onClick={handleExport}
+            variant="outline"
+            size="sm"
+            className="h-9 gap-1.5"
           >
-            {entries.length} {entries.length === 1 ? 'record' : 'records'}
-          </span>
-        )}
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Export Excel</span>
+            <span className="sm:hidden">Export</span>
+          </Button>
+        </div>
       </div>
 
-      {/* Filter Panel */}
-      <div className="aviation-card rounded-xl p-5 mb-6">
-        <p className="section-label">Filter Records</p>
+      {/* Filters */}
+      <div className="bg-card border border-border rounded-xl p-4">
         <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Month (YYYY-MM)</Label>
+          <div className="flex-1">
             <Input
-              value={monthInput}
-              onChange={(e) => setMonthInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="e.g. 2026-02"
-              className="min-h-[44px] bg-input border-border font-mono"
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
+              placeholder="Filter by month (YYYY-MM)"
+              className="h-11"
             />
           </div>
-          <div className="flex-1 space-y-1.5">
-            <Label className="text-xs text-muted-foreground">Student Name</Label>
+          <div className="flex-1">
             <Input
-              value={studentInput}
-              onChange={(e) => setStudentInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="Search by student name"
-              className="min-h-[44px] bg-input border-border"
+              value={studentFilter}
+              onChange={(e) => setStudentFilter(e.target.value)}
+              placeholder="Filter by student name"
+              className="h-11"
             />
           </div>
-          <div className="flex items-end gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <Button
-              onClick={handleSearch}
-              className="min-h-[44px] px-5 gap-2"
-              style={{
-                background: 'linear-gradient(135deg, oklch(0.62 0.18 230) 0%, oklch(0.55 0.2 225) 100%)',
-                color: 'oklch(0.98 0.005 220)',
-              }}
+              variant="outline"
+              onClick={handleReset}
+              className="h-11 gap-1.5 flex-1 sm:flex-none"
             >
-              <Search size={15} />
+              <X className="w-4 h-4" />
+              Reset
+            </Button>
+            <Button
+              className="h-11 gap-1.5 flex-1 sm:flex-none"
+              onClick={() => {}} // filtering is reactive
+            >
+              <Search className="w-4 h-4" />
               Search
             </Button>
-            {isFiltered && (
-              <Button
-                variant="outline"
-                onClick={handleReset}
-                className="min-h-[44px] px-4 gap-2 border-border hover:bg-accent"
-              >
-                <RotateCcw size={14} />
-                Reset
-              </Button>
-            )}
           </div>
         </div>
 
-        {isFiltered && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {activeMonth && (
-              <span className="text-xs px-2.5 py-1 rounded-full"
-                style={{ background: 'oklch(0.62 0.18 230 / 0.15)', color: 'oklch(0.75 0.18 230)' }}
-              >
-                Month: {activeMonth}
-              </span>
-            )}
-            {activeStudent && (
-              <span className="text-xs px-2.5 py-1 rounded-full"
-                style={{ background: 'oklch(0.70 0.15 180 / 0.15)', color: 'oklch(0.72 0.15 180)' }}
-              >
-                Student: {activeStudent}
-              </span>
-            )}
-          </div>
+        {/* Filter summary */}
+        {(monthFilter || studentFilter) && (
+          <p className="text-xs text-muted-foreground mt-2">
+            Showing {filteredEntries.length} of {allEntries?.length ?? 0} records
+            {monthFilter && ` · Month: ${monthFilter}`}
+            {studentFilter && ` · Student: ${studentFilter}`}
+          </p>
         )}
       </div>
 
       {/* Table */}
       {isLoading ? (
-        <div className="aviation-card rounded-xl p-6 space-y-3">
-          {[1, 2, 3, 4, 5].map(i => (
-            <Skeleton key={i} className="h-12 w-full rounded-lg" style={{ background: 'oklch(0.22 0.04 240)' }} />
+        <div className="space-y-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full rounded-lg" />
           ))}
         </div>
+      ) : isError ? (
+        <div className="text-center py-12 text-destructive">
+          <p className="font-display text-lg mb-1">Failed to load flight records</p>
+          <p className="text-sm text-muted-foreground">Please try refreshing the page.</p>
+        </div>
       ) : (
-        <FlightRecordsTable entries={entries} />
+        <FlightRecordsTable entries={filteredEntries} />
       )}
     </div>
   );

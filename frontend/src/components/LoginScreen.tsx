@@ -1,113 +1,113 @@
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { Plane, Shield, BookOpen } from 'lucide-react';
+import { Plane, Shield, Clock, BarChart2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function LoginScreen() {
-  const { login, loginStatus, isLoggingIn, isInitializing } = useInternetIdentity();
+  const { login, loginStatus } = useInternetIdentity();
+  const isLoggingIn = loginStatus === 'logging-in';
 
   const handleLogin = async () => {
     try {
       await login();
-    } catch (error: unknown) {
-      const err = error as Error;
-      if (err?.message === 'User is already authenticated') {
-        // Already authenticated, ignore
-      }
+    } catch (error: any) {
+      console.error('Login error:', error);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Background */}
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+      {/* Background image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/assets/generated/login-bg.dim_1280x800.png)' }}
+        style={{ backgroundImage: 'url(/assets/generated/login-bg.dim_1920x1080.png)' }}
       />
-      <div className="absolute inset-0" style={{
-        background: 'linear-gradient(135deg, oklch(0.10 0.03 240 / 0.92) 0%, oklch(0.14 0.04 235 / 0.85) 50%, oklch(0.12 0.03 245 / 0.90) 100%)'
-      }} />
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-navy-950/80" />
 
-      {/* Decorative horizon line */}
-      <div className="absolute bottom-1/3 left-0 right-0 h-px opacity-20"
-        style={{ background: 'linear-gradient(90deg, transparent, oklch(0.62 0.18 230), transparent)' }}
-      />
+      {/* Content */}
+      <div className="relative z-10 flex flex-col min-h-screen">
+        {/* Header */}
+        <header className="px-6 py-4 flex items-center gap-3">
+          <img
+            src="/assets/generated/flight-log-logo.dim_256x256.png"
+            alt="Flight Log Logo"
+            className="w-10 h-10 rounded-lg"
+          />
+          <span className="font-display text-xl font-bold text-sky-300 tracking-wider">
+            FLIGHT LOG
+          </span>
+        </header>
 
-      {/* Login Card */}
-      <div className="relative z-10 w-full max-w-md mx-4 animate-fade-in">
-        <div className="aviation-card p-8 rounded-2xl border border-sky-500/20"
-          style={{
-            background: 'linear-gradient(135deg, oklch(0.16 0.04 240 / 0.95) 0%, oklch(0.14 0.03 245 / 0.95) 100%)',
-            boxShadow: '0 8px 48px oklch(0.08 0.02 240 / 0.8), 0 0 0 1px oklch(0.62 0.18 230 / 0.15)',
-            backdropFilter: 'blur(20px)',
-          }}
-        >
-          {/* Logo */}
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-20 h-20 mb-4 rounded-2xl overflow-hidden flex items-center justify-center"
-              style={{ background: 'oklch(0.62 0.18 230 / 0.15)', border: '1px solid oklch(0.62 0.18 230 / 0.3)' }}
-            >
-              <img
-                src="/assets/generated/flight-log-logo.dim_256x256.png"
-                alt="FlightLog Pro"
-                className="w-16 h-16 object-contain"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                  (e.target as HTMLImageElement).parentElement!.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="oklch(0.62 0.18 230)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19 4c-1 0-1.5.5-3.5 2.5L11 8 2.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 7.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>';
-                }}
-              />
-            </div>
-            <h1 className="font-display text-3xl font-bold tracking-wider text-foreground">
-              FLIGHTLOG PRO
-            </h1>
-            <p className="text-sm mt-1" style={{ color: 'oklch(0.6 0.08 230)' }}>
-              Aviation Training Management System
-            </p>
-          </div>
-
-          {/* Features */}
-          <div className="grid grid-cols-3 gap-3 mb-8">
-            {[
-              { icon: Plane, label: 'Flight Logs' },
-              { icon: BookOpen, label: 'Exercises' },
-              { icon: Shield, label: 'Secure' },
-            ].map(({ icon: Icon, label }) => (
-              <div key={label} className="flex flex-col items-center gap-1.5 p-3 rounded-lg"
-                style={{ background: 'oklch(0.20 0.04 240 / 0.6)' }}
-              >
-                <Icon size={18} style={{ color: 'oklch(0.62 0.18 230)' }} />
-                <span className="text-xs font-medium" style={{ color: 'oklch(0.7 0.04 230)' }}>{label}</span>
+        {/* Main content */}
+        <main className="flex-1 flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-md">
+            {/* Hero card */}
+            <div className="bg-card/90 backdrop-blur-sm border border-border rounded-2xl p-8 shadow-2xl">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/20 rounded-full mb-4">
+                  <Plane className="w-8 h-8 text-primary" />
+                </div>
+                <h1 className="font-display text-3xl font-bold text-foreground mb-2">
+                  Welcome Back
+                </h1>
+                <p className="text-muted-foreground text-sm">
+                  Sign in to access your flight log and records
+                </p>
               </div>
-            ))}
+
+              {/* Features */}
+              <div className="space-y-3 mb-8">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <div className="w-8 h-8 bg-sky-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-4 h-4 text-sky-400" />
+                  </div>
+                  <span>Track flight hours by day and month</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <div className="w-8 h-8 bg-sky-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <BarChart2 className="w-4 h-4 text-sky-400" />
+                  </div>
+                  <span>Student and aircraft hour reports</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <div className="w-8 h-8 bg-sky-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Shield className="w-4 h-4 text-sky-400" />
+                  </div>
+                  <span>Secure, decentralized data storage</span>
+                </div>
+              </div>
+
+              {/* Login button */}
+              <Button
+                onClick={handleLogin}
+                disabled={isLoggingIn}
+                className="w-full h-12 text-base font-display font-semibold tracking-wide"
+                size="lg"
+              >
+                {isLoggingIn ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    Signing In...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <Plane className="w-5 h-5" />
+                    Sign In
+                  </span>
+                )}
+              </Button>
+
+              <p className="text-center text-xs text-muted-foreground mt-4">
+                Secured by Internet Identity — no passwords required
+              </p>
+            </div>
           </div>
+        </main>
 
-          {/* Login Button */}
-          <button
-            onClick={handleLogin}
-            disabled={isLoggingIn || isInitializing}
-            className="w-full aviation-btn-primary flex items-center justify-center gap-2 text-base font-semibold rounded-xl disabled:opacity-60 disabled:cursor-not-allowed"
-            style={{ minHeight: '52px' }}
-          >
-            {isLoggingIn ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Authenticating...
-              </>
-            ) : isInitializing ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Initializing...
-              </>
-            ) : (
-              <>
-                <Shield size={18} />
-                Login with Internet Identity
-              </>
-            )}
-          </button>
-
-          <p className="text-center text-xs mt-4" style={{ color: 'oklch(0.5 0.04 230)' }}>
-            Secure, decentralized authentication
-          </p>
-        </div>
+        {/* Footer */}
+        <footer className="relative z-10 py-4 text-center text-xs text-muted-foreground/60">
+          &copy; {new Date().getFullYear()} Flight Log App
+        </footer>
       </div>
     </div>
   );

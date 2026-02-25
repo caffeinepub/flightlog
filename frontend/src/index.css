@@ -1,64 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap');
-
 @layer base {
   :root {
+    /* Aviation dark navy theme — light mode (still dark-leaning) */
+    --background: oklch(0.14 0.025 240);
+    --foreground: oklch(0.93 0.015 220);
+
+    --card: oklch(0.18 0.025 240);
+    --card-foreground: oklch(0.93 0.015 220);
+
+    --popover: oklch(0.18 0.025 240);
+    --popover-foreground: oklch(0.93 0.015 220);
+
+    --primary: oklch(0.65 0.18 210);
+    --primary-foreground: oklch(0.10 0.02 240);
+
+    --secondary: oklch(0.22 0.03 240);
+    --secondary-foreground: oklch(0.85 0.015 220);
+
+    --muted: oklch(0.22 0.025 240);
+    --muted-foreground: oklch(0.60 0.02 230);
+
+    --accent: oklch(0.25 0.04 240);
+    --accent-foreground: oklch(0.90 0.015 220);
+
+    --destructive: oklch(0.55 0.22 25);
+    --destructive-foreground: oklch(0.98 0.005 0);
+
+    --border: oklch(0.28 0.03 240);
+    --input: oklch(0.22 0.025 240);
+    --ring: oklch(0.65 0.18 210);
+
     --radius: 0.5rem;
 
-    /* Aviation Dark Navy Theme */
-    --background: 0.14 0.025 240;
-    --foreground: 0.95 0.01 220;
-
-    --card: 0.18 0.03 240;
-    --card-foreground: 0.95 0.01 220;
-
-    --popover: 0.2 0.035 240;
-    --popover-foreground: 0.95 0.01 220;
-
-    /* Sky Blue Primary */
-    --primary: 0.62 0.18 230;
-    --primary-foreground: 0.98 0.005 220;
-
-    --secondary: 0.22 0.04 240;
-    --secondary-foreground: 0.85 0.02 220;
-
-    --muted: 0.22 0.03 240;
-    --muted-foreground: 0.6 0.04 230;
-
-    --accent: 0.28 0.05 240;
-    --accent-foreground: 0.9 0.01 220;
-
-    --destructive: 0.58 0.22 25;
-    --destructive-foreground: 0.98 0.005 220;
-
-    --border: 0.28 0.04 240;
-    --input: 0.24 0.04 240;
-    --ring: 0.62 0.18 230;
-
-    --chart-1: 0.62 0.18 230;
-    --chart-2: 0.7 0.15 180;
-    --chart-3: 0.75 0.12 140;
-    --chart-4: 0.65 0.2 60;
-    --chart-5: 0.6 0.22 25;
-
-    --sidebar: 0.16 0.03 240;
-    --sidebar-foreground: 0.95 0.01 220;
-    --sidebar-primary: 0.62 0.18 230;
-    --sidebar-primary-foreground: 0.98 0.005 220;
-    --sidebar-accent: 0.22 0.04 240;
-    --sidebar-accent-foreground: 0.9 0.01 220;
-    --sidebar-border: 0.28 0.04 240;
-    --sidebar-ring: 0.62 0.18 230;
-
-    /* Aviation specific tokens */
-    --sky-blue: 0.62 0.18 230;
-    --navy-deep: 0.12 0.03 240;
-    --horizon-glow: 0.55 0.15 210;
+    --success: oklch(0.60 0.18 145);
+    --warning: oklch(0.75 0.18 75);
   }
 
+  .dark {
+    --background: oklch(0.12 0.025 240);
+    --foreground: oklch(0.93 0.015 220);
+
+    --card: oklch(0.16 0.025 240);
+    --card-foreground: oklch(0.93 0.015 220);
+
+    --popover: oklch(0.16 0.025 240);
+    --popover-foreground: oklch(0.93 0.015 220);
+
+    --primary: oklch(0.65 0.18 210);
+    --primary-foreground: oklch(0.10 0.02 240);
+
+    --secondary: oklch(0.20 0.03 240);
+    --secondary-foreground: oklch(0.85 0.015 220);
+
+    --muted: oklch(0.20 0.025 240);
+    --muted-foreground: oklch(0.58 0.02 230);
+
+    --accent: oklch(0.22 0.04 240);
+    --accent-foreground: oklch(0.90 0.015 220);
+
+    --destructive: oklch(0.55 0.22 25);
+    --destructive-foreground: oklch(0.98 0.005 0);
+
+    --border: oklch(0.26 0.03 240);
+    --input: oklch(0.20 0.025 240);
+    --ring: oklch(0.65 0.18 210);
+  }
+}
+
+@layer base {
   * {
     @apply border-border;
   }
@@ -66,114 +80,91 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, sans-serif;
-    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3, .font-display {
-    font-family: 'Rajdhani', 'Inter', sans-serif;
-    letter-spacing: 0.02em;
+  .font-display {
+    font-family: 'Rajdhani', system-ui, sans-serif;
+  }
+
+  /* Touch-friendly minimum sizes */
+  button, [role="button"] {
+    min-height: 36px;
+  }
+
+  /* Prevent horizontal overflow */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 }
 
 @layer components {
+  /* Aviation card style */
   .aviation-card {
-    @apply bg-card border border-border rounded-lg shadow-lg;
-    background: linear-gradient(135deg, oklch(0.18 0.03 240) 0%, oklch(0.16 0.025 245) 100%);
-    box-shadow: 0 4px 24px oklch(0.08 0.02 240 / 0.6), 0 1px 4px oklch(0.08 0.02 240 / 0.4);
+    @apply bg-card border border-border rounded-xl p-4;
   }
 
-  .aviation-btn-primary {
-    @apply min-h-[44px] px-6 py-2.5 rounded-md font-semibold text-sm transition-all duration-200;
-    background: linear-gradient(135deg, oklch(0.62 0.18 230) 0%, oklch(0.55 0.2 225) 100%);
-    color: oklch(0.98 0.005 220);
-    box-shadow: 0 2px 12px oklch(0.62 0.18 230 / 0.35);
+  /* Status badges */
+  .badge-solo {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/20 text-primary;
   }
 
-  .aviation-btn-primary:hover {
-    background: linear-gradient(135deg, oklch(0.68 0.18 230) 0%, oklch(0.62 0.2 225) 100%);
-    box-shadow: 0 4px 20px oklch(0.62 0.18 230 / 0.5);
-    transform: translateY(-1px);
+  .badge-dual {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary text-secondary-foreground;
   }
 
-  .aviation-btn-primary:active {
-    transform: translateY(0);
+  .badge-day {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-400;
   }
 
-  .aviation-input {
-    @apply min-h-[44px] bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-all;
+  .badge-night {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-500/20 text-indigo-400;
   }
 
-  .nav-item {
-    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150 min-h-[44px];
-    color: oklch(0.75 0.04 230);
-  }
-
-  .nav-item:hover {
-    background: oklch(0.22 0.04 240);
-    color: oklch(0.95 0.01 220);
-  }
-
-  .nav-item.active {
-    background: oklch(0.62 0.18 230 / 0.15);
-    color: oklch(0.75 0.18 230);
-    border-left: 3px solid oklch(0.62 0.18 230);
-  }
-
-  .page-header {
-    @apply flex items-center gap-3 mb-6;
-  }
-
-  .page-title {
-    font-family: 'Rajdhani', sans-serif;
-    @apply text-2xl font-bold tracking-wide;
-    color: oklch(0.95 0.01 220);
-  }
-
-  .section-label {
-    @apply text-xs font-semibold uppercase tracking-widest mb-2;
-    color: oklch(0.55 0.08 230);
-  }
-
-  .status-badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
-  }
-
-  .status-solo {
-    background: oklch(0.62 0.18 230 / 0.2);
-    color: oklch(0.75 0.18 230);
-  }
-
-  .status-dual {
-    background: oklch(0.65 0.15 180 / 0.2);
-    color: oklch(0.72 0.15 180);
-  }
-
-  .status-day {
-    background: oklch(0.75 0.15 80 / 0.2);
-    color: oklch(0.78 0.15 80);
-  }
-
-  .status-night {
-    background: oklch(0.55 0.12 280 / 0.2);
-    color: oklch(0.72 0.12 280);
-  }
-
-  /* Scrollbar styling */
+  /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    background: oklch(0.16 0.025 240);
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: oklch(0.32 0.05 240);
-    border-radius: 3px;
+    @apply bg-border rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.42 0.08 230);
+    @apply bg-muted-foreground/50;
+  }
+}
+
+@layer utilities {
+  /* Sky glow effect */
+  .sky-glow {
+    box-shadow: 0 0 20px oklch(0.65 0.18 210 / 0.3);
+  }
+
+  /* Fade in animation */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Slide in animation */
+  .animate-slide-in {
+    animation: slideIn 0.2s ease-out;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to { opacity: 1; transform: translateX(0); }
   }
 }

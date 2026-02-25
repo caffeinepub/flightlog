@@ -28,6 +28,14 @@ export const UserRole = IDL.Variant({
   'guest' : IDL.Null,
 });
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
+export const AircraftSummary = IDL.Record({
+  'totalFlightHours' : IDL.Float64,
+  'aircraft' : IDL.Text,
+});
+export const StudentTotalHours = IDL.Record({
+  'totalFlightHours' : IDL.Float64,
+  'student' : IDL.Text,
+});
 export const Category = IDL.Record({ 'name' : IDL.Text });
 
 export const idlService = IDL.Service({
@@ -36,11 +44,23 @@ export const idlService = IDL.Service({
   'addFlightEntry' : IDL.Func([FlightEntry], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'deleteCategory' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'deleteFlightEntry' : IDL.Func([IDL.Nat], [], []),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getFlightEntries' : IDL.Func(
       [IDL.Opt(IDL.Text), IDL.Opt(IDL.Text)],
       [IDL.Vec(FlightEntry)],
+      ['query'],
+    ),
+  'getFlightEntry' : IDL.Func([IDL.Nat], [IDL.Opt(FlightEntry)], ['query']),
+  'getTotalFlightHoursByAircraft' : IDL.Func(
+      [],
+      [IDL.Vec(AircraftSummary)],
+      ['query'],
+    ),
+  'getTotalFlightHoursByStudent' : IDL.Func(
+      [],
+      [IDL.Vec(StudentTotalHours)],
       ['query'],
     ),
   'getUserProfile' : IDL.Func(
@@ -51,6 +71,7 @@ export const idlService = IDL.Service({
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'listCategories' : IDL.Func([IDL.Text], [IDL.Vec(Category)], ['query']),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'updateFlightEntry' : IDL.Func([IDL.Nat, FlightEntry], [], []),
 });
 
 export const idlInitArgs = [];
@@ -76,6 +97,14 @@ export const idlFactory = ({ IDL }) => {
     'guest' : IDL.Null,
   });
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
+  const AircraftSummary = IDL.Record({
+    'totalFlightHours' : IDL.Float64,
+    'aircraft' : IDL.Text,
+  });
+  const StudentTotalHours = IDL.Record({
+    'totalFlightHours' : IDL.Float64,
+    'student' : IDL.Text,
+  });
   const Category = IDL.Record({ 'name' : IDL.Text });
   
   return IDL.Service({
@@ -84,11 +113,23 @@ export const idlFactory = ({ IDL }) => {
     'addFlightEntry' : IDL.Func([FlightEntry], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'deleteCategory' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'deleteFlightEntry' : IDL.Func([IDL.Nat], [], []),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getFlightEntries' : IDL.Func(
         [IDL.Opt(IDL.Text), IDL.Opt(IDL.Text)],
         [IDL.Vec(FlightEntry)],
+        ['query'],
+      ),
+    'getFlightEntry' : IDL.Func([IDL.Nat], [IDL.Opt(FlightEntry)], ['query']),
+    'getTotalFlightHoursByAircraft' : IDL.Func(
+        [],
+        [IDL.Vec(AircraftSummary)],
+        ['query'],
+      ),
+    'getTotalFlightHoursByStudent' : IDL.Func(
+        [],
+        [IDL.Vec(StudentTotalHours)],
         ['query'],
       ),
     'getUserProfile' : IDL.Func(
@@ -99,6 +140,7 @@ export const idlFactory = ({ IDL }) => {
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'listCategories' : IDL.Func([IDL.Text], [IDL.Vec(Category)], ['query']),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'updateFlightEntry' : IDL.Func([IDL.Nat, FlightEntry], [], []),
   });
 };
 

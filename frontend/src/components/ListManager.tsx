@@ -1,10 +1,21 @@
 import { useState } from 'react';
-import { useListCategories, useAddCategory, useDeleteCategory } from '../hooks/useQueries';
+import { useAddCategory, useDeleteCategory, useListCategories } from '../hooks/useQueries';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Pencil, Trash2, Plus, Check, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface ListManagerProps {
   categoryType: string;
@@ -13,26 +24,25 @@ interface ListManagerProps {
 }
 
 export default function ListManager({ categoryType, title, placeholder }: ListManagerProps) {
-  const [inputValue, setInputValue] = useState('');
+  const { data: categories, isLoading } = useListCategories(categoryType);
+  const addCategory = useAddCategory();
+  const deleteCategory = useDeleteCategory();
+
+  const [newItem, setNewItem] = useState('');
   const [editingName, setEditingName] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
 
-  const { data: items = [], isLoading } = useListCategories(categoryType);
-  const addCategory = useAddCategory(categoryType);
-  const deleteCategory = useDeleteCategory(categoryType);
-
-  // Note: backend uses name as key, so "edit" = delete old + add new
   const handleAdd = async () => {
-    const trimmed = inputValue.trim();
+    const trimmed = newItem.trim();
     if (!trimmed) return;
-    if (items.some(i => i.name === trimmed)) {
-      toast.error(`"${trimmed}" already exists`);
+    if (categories?.some(c => c.name === trimmed)) {
+      toast.error('Item already exists');
       return;
     }
     try {
-      await addCategory.mutateAsync(trimmed);
-      setInputValue('');
-      toast.success(`Added "${trimmed}"`);
+      await addCategory.mutateAsync({ categoryType, name: trimmed });
+      setNewItem('');
+      toast.success(`${trimmed} added`);
     } catch {
       toast.error('Failed to add item');
     }
@@ -40,152 +50,156 @@ export default function ListManager({ categoryType, title, placeholder }: ListMa
 
   const handleDelete = async (name: string) => {
     try {
-      await deleteCategory.mutateAsync(name);
-      toast.success(`Deleted "${name}"`);
+      await deleteCategory.mutateAsync({ categoryType, name });
+      toast.success(`${name} deleted`);
     } catch {
       toast.error('Failed to delete item');
     }
   };
 
-  const startEdit = (name: string) => {
+  const handleEditStart = (name: string) => {
     setEditingName(name);
     setEditValue(name);
   };
 
-  const cancelEdit = () => {
-    setEditingName(null);
-    setEditValue('');
-  };
-
-  const saveEdit = async () => {
+  const handleEditSave = async () => {
+    if (!editingName) return;
     const trimmed = editValue.trim();
     if (!trimmed || trimmed === editingName) {
-      cancelEdit();
-      return;
-    }
-    if (items.some(i => i.name === trimmed)) {
-      toast.error(`"${trimmed}" already exists`);
+      setEditingName(null);
       return;
     }
     try {
       // Delete old, add new
-      await deleteCategory.mutateAsync(editingName!);
-      await addCategory.mutateAsync(trimmed);
+      await deleteCategory.mutateAsync({ categoryType, name: editingName });
+      await addCategory.mutateAsync({ categoryType, name: trimmed });
       setEditingName(null);
-      setEditValue('');
-      toast.success(`Updated to "${trimmed}"`);
+      toast.success('Item updated');
     } catch {
       toast.error('Failed to update item');
     }
   };
 
+  const handleEditCancel = () => {
+    setEditingName(null);
+    setEditValue('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleAdd();
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleEditSave();
+    if (e.key === 'Escape') handleEditCancel();
+  };
+
   return (
     <div className="space-y-4">
       {/* Add new item */}
-      <div className="aviation-card p-4 rounded-xl">
-        <p className="section-label">Add New {title.replace(/s$/, '')}</p>
-        <div className="flex gap-2">
-          <Input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-            placeholder={placeholder ?? `Enter ${title.toLowerCase().replace(/s$/, '')} name`}
-            className="flex-1 min-h-[44px] bg-input border-border"
-          />
-          <Button
-            onClick={handleAdd}
-            disabled={!inputValue.trim() || addCategory.isPending}
-            className="min-h-[44px] px-4 gap-2"
-            style={{
-              background: 'linear-gradient(135deg, oklch(0.62 0.18 230) 0%, oklch(0.55 0.2 225) 100%)',
-              color: 'oklch(0.98 0.005 220)',
-            }}
-          >
-            {addCategory.isPending ? (
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Plus size={16} />
-            )}
-            Add
-          </Button>
-        </div>
+      <div className="flex gap-2">
+        <Input
+          value={newItem}
+          onChange={(e) => setNewItem(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder || `Add new ${title.toLowerCase()}...`}
+          className="h-11 flex-1"
+        />
+        <Button
+          onClick={handleAdd}
+          disabled={addCategory.isPending || !newItem.trim()}
+          className="h-11 px-4 flex-shrink-0"
+        >
+          {addCategory.isPending ? (
+            <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Plus className="w-4 h-4" />
+          )}
+          <span className="ml-1 hidden sm:inline">Add</span>
+        </Button>
       </div>
 
       {/* List */}
-      <div className="aviation-card rounded-xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <p className="section-label mb-0">{title}</p>
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full"
-            style={{ background: 'oklch(0.62 0.18 230 / 0.15)', color: 'oklch(0.75 0.18 230)' }}
-          >
-            {items.length}
-          </span>
-        </div>
-
+      <div className="space-y-2">
         {isLoading ? (
-          <div className="p-4 space-y-2">
-            {[1, 2, 3].map(i => (
-              <Skeleton key={i} className="h-12 w-full rounded-lg" style={{ background: 'oklch(0.22 0.04 240)' }} />
-            ))}
-          </div>
-        ) : items.length === 0 ? (
-          <div className="p-8 text-center">
-            <p className="text-muted-foreground text-sm">No {title.toLowerCase()} added yet.</p>
-            <p className="text-muted-foreground text-xs mt-1">Use the form above to add your first entry.</p>
+          Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full rounded-lg" />
+          ))
+        ) : !categories || categories.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground text-sm">
+            No {title.toLowerCase()} added yet. Add one above.
           </div>
         ) : (
-          <ul className="divide-y divide-border">
-            {items.map((item) => (
-              <li key={item.name} className="flex items-center gap-3 px-4 py-3 hover:bg-accent/30 transition-colors">
-                {editingName === item.name ? (
-                  <>
-                    <Input
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') saveEdit();
-                        if (e.key === 'Escape') cancelEdit();
-                      }}
-                      className="flex-1 min-h-[36px] h-9 bg-input border-border text-sm"
-                      autoFocus
-                    />
-                    <button
-                      onClick={saveEdit}
-                      className="p-2 rounded-lg transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
-                      style={{ background: 'oklch(0.62 0.18 230 / 0.15)', color: 'oklch(0.75 0.18 230)' }}
-                    >
-                      <Check size={14} />
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="p-2 rounded-lg transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center hover:bg-accent"
-                    >
-                      <X size={14} className="text-muted-foreground" />
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <span className="flex-1 text-sm font-medium text-foreground">{item.name}</span>
-                    <button
-                      onClick={() => startEdit(item.name)}
-                      className="p-2 rounded-lg transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center hover:bg-accent"
-                      title="Edit"
-                    >
-                      <Pencil size={14} className="text-muted-foreground hover:text-foreground" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item.name)}
-                      disabled={deleteCategory.isPending}
-                      className="p-2 rounded-lg transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center hover:bg-destructive/10"
-                      title="Delete"
-                    >
-                      <Trash2 size={14} className="text-muted-foreground hover:text-destructive" />
-                    </button>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
+          categories.map((cat) => (
+            <div
+              key={cat.name}
+              className="flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-2 min-h-[48px]"
+            >
+              {editingName === cat.name ? (
+                <>
+                  <Input
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={handleEditKeyDown}
+                    className="h-8 flex-1 text-sm"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleEditSave}
+                    className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-primary/20 text-primary transition-colors"
+                    aria-label="Save"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleEditCancel}
+                    className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground transition-colors"
+                    aria-label="Cancel"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="flex-1 text-sm font-medium text-foreground">{cat.name}</span>
+                  <button
+                    onClick={() => handleEditStart(cat.name)}
+                    className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={`Edit ${cat.name}`}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button
+                        className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                        aria-label={`Delete ${cat.name}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete {cat.name}?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently remove "{cat.name}" from the {title.toLowerCase()} list. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(cat.name)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
+            </div>
+          ))
         )}
       </div>
     </div>

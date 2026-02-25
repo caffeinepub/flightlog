@@ -1,198 +1,49 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Flight Log Pro - Frontend Implementation",
+  "title": "Fix flight record update, edit, and delete operations",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Implement Internet Identity authentication flow with login gate and user-scoped session management",
+      "id": "REQ-3",
+      "summary": "Fix the useEditFlightEntry mutation hook so that submitting the EditFlightEntryModal correctly calls the backend updateFlightEntry function, serializes all field values properly, and invalidates the flight entries query cache on success",
       "acceptanceCriteria": [
-        "Unauthenticated users see a login screen and cannot navigate to any other view",
-        "Clicking 'Login' triggers Internet Identity authentication",
-        "After successful login, the user is redirected to the main menu",
-        "Logout button is visible from the main menu and clears the session"
+        "Submitting the edit modal sends all updated field values to the backend without serialization errors.",
+        "On successful update, the flight records table reflects the new values without requiring a page reload.",
+        "A success toast notification is displayed after a successful update.",
+        "An error toast is displayed if the update fails."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/LoginScreen.tsx",
-          "operation": "create",
-          "description": "Create a login screen component that displays the aviation-themed login background image (frontend/public/assets/generated/login-bg.dim_1280x800.png), the app logo (frontend/public/assets/generated/flight-log-logo.dim_256x256.png), app title, and a Login button. Use the authorization component's useInternetIdentity hook to trigger authentication. Apply dark navy and sky-blue color palette with card-based layout. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/AuthGuard.tsx",
-          "operation": "create",
-          "description": "Create an AuthGuard component that wraps authenticated routes. Use the authorization component's useInternetIdentity hook to check authentication status. Show LoginScreen for unauthenticated users, otherwise render children. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/ProfileSetupModal.tsx",
-          "operation": "create",
-          "description": "Create a modal component for first-time user profile setup. Use the authorization component's useGetCallerUserProfile and useSaveCallerUserProfile hooks. Display a form asking for the user's name and save it via saveCallerUserProfile. Follow the component's guidance on preventing modal flash by checking isAuthenticated, profileLoading, isFetched, and userProfile === null states. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/App.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Wrap the main application routes with AuthGuard component. Add ProfileSetupModal that conditionally renders based on authentication state and profile existence. Ensure unauthenticated users cannot access any route except the login screen."
+          "description": "Fix the useEditFlightEntry mutation hook to ensure all FlightEntry field values (including dateEpoch BigInt, totalFlightTime string, and enum variants for flightType and landingType) are correctly serialized when calling actor.updateFlightEntry. Ensure the mutation invalidates the ['flightEntries'] query cache on success and displays appropriate toast notifications for success and error states. Verify that the entryId is passed as BigInt and that all time/date fields match the backend interface type requirements."
         },
         {
-          "path": "frontend/src/hooks/useGetCallerUserProfile.ts",
-          "operation": "create",
-          "description": "Create a custom hook that wraps useQuery for fetching the current user's profile. Use the authorization component's pattern for preventing profile setup modal flash by properly handling actor dependency and returning isLoading state that reflects both actorFetching and query.isLoading. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/useSaveCallerUserProfile.ts",
-          "operation": "create",
-          "description": "Create a custom hook that wraps useMutation for saving the current user's profile. Call actor.saveCallerUserProfile with the UserProfile object and invalidate the currentUserProfile query key on success."
+          "path": "frontend/src/components/EditFlightEntryModal.tsx",
+          "operation": "modify",
+          "description": "Review and fix the form submission handler to ensure all field values are correctly extracted from the form state and passed to the useEditFlightEntry mutation. Verify that date strings are converted to dateEpoch BigInt using the timeCalculations utility, that totalFlightTime is calculated correctly, and that enum fields (flightType: 'dual' | 'solo', landingType: 'day' | 'night') are passed as the correct variant format expected by the backend. Ensure landingCount is converted to BigInt before submission."
         }
       ]
     },
     {
       "id": "REQ-4",
-      "summary": "Build a reusable List Manager component for managing Students, Instructors, Aircraft, and Exercises with add, edit, and delete operations",
+      "summary": "Fix the delete mutation hook and confirmation dialog in FlightRecordsTable so that confirming deletion correctly calls the backend deleteFlightEntry function and removes the entry from the displayed table",
       "acceptanceCriteria": [
-        "Text input and Save button allow adding a new item to the list",
-        "Each list item has an Edit (✏) button that pre-fills the input for editing",
-        "Each list item has a Delete (🗑) button that removes it from the list and backend",
-        "List refreshes after every add, edit, or delete action",
-        "The same component is used for all four categories"
+        "Clicking the delete action and confirming in the alert dialog triggers the deleteFlightEntry backend call.",
+        "The deleted row is removed from the table immediately after a successful delete.",
+        "A success toast notification is displayed after a successful delete.",
+        "An error toast is displayed if the delete fails."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/ListManager.tsx",
-          "operation": "create",
-          "description": "Create a reusable ListManager component that accepts categoryType prop ('students', 'instructors', 'aircraft', 'exercises'). Display the list of items fetched from backend via listCategories. Include a text input and Save button for adding items. Render each item with Edit (✏) and Delete (🗑) buttons. Edit pre-fills the input and switches to update mode. Use card-based layout with dark navy and sky-blue theme. Ensure touch-friendly 44px minimum button height."
-        },
-        {
-          "path": "frontend/src/hooks/useCategories.ts",
-          "operation": "create",
-          "description": "Create a custom hook that provides useQuery for listing categories (listCategories) and useMutation hooks for adding (addCategory), and deleting (deleteCategory) category items. Accept categoryType parameter and invalidate the query cache after mutations."
-        },
-        {
-          "path": "frontend/src/pages/StudentsPage.tsx",
-          "operation": "create",
-          "description": "Create a page component that renders ListManager with categoryType='students'. Include page header with title 'Students' and navigation back to main menu."
-        },
-        {
-          "path": "frontend/src/pages/InstructorsPage.tsx",
-          "operation": "create",
-          "description": "Create a page component that renders ListManager with categoryType='instructors'. Include page header with title 'Instructors' and navigation back to main menu."
-        },
-        {
-          "path": "frontend/src/pages/AircraftPage.tsx",
-          "operation": "create",
-          "description": "Create a page component that renders ListManager with categoryType='aircraft'. Include page header with title 'Aircraft' and navigation back to main menu."
-        },
-        {
-          "path": "frontend/src/pages/ExercisesPage.tsx",
-          "operation": "create",
-          "description": "Create a page component that renders ListManager with categoryType='exercises'. Include page header with title 'Exercises' and navigation back to main menu."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Build a Flight Log Entry form with date, dropdown selectors, time inputs, and automatic total flight time calculation",
-      "acceptanceCriteria": [
-        "Date field defaults to today's date in YYYY-MM-DD format",
-        "Student, Instructor, Aircraft, and Exercise dropdowns are populated from backend data",
-        "Flight Type selector offers 'Solo' and 'Dual' options",
-        "Landing Type selector offers 'Day' and 'Night' options",
-        "Landing Count accepts only integers",
-        "Takeoff and Landing time fields accept HH:MM format",
-        "Saving the form computes total flight time and submits all fields to the backend",
-        "A success message or confirmation is shown after saving"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/FlightLogEntryPage.tsx",
-          "operation": "create",
-          "description": "Create a flight log entry form page. Pre-fill date with today's date (YYYY-MM-DD). Fetch and populate dropdown options for student, instructor, aircraft, and exercise using listCategories for each category type. Include Flight Type radio buttons (Solo/Dual) and Landing Type radio buttons (Day/Night). Add takeoff and landing time inputs (HH:MM format). Compute total flight time as HH:MM difference when both times are entered. Landing count accepts integers only. Use card-based form layout with aviation theme. On save, call addFlightEntry and show success message. Use shadcn/ui form components."
-        },
-        {
-          "path": "frontend/src/hooks/useFlightEntry.ts",
-          "operation": "create",
-          "description": "Create a custom hook that wraps useMutation for adding flight entries via addFlightEntry. Accept a FlightEntry object and invalidate flight entries query cache on success."
-        },
-        {
-          "path": "frontend/src/utils/timeCalculations.ts",
-          "operation": "create",
-          "description": "Create utility functions for computing total flight time from takeoff and landing times in HH:MM format. Handle time differences that cross midnight boundaries. Return result in HH:MM format."
-        }
-      ]
-    },
-    {
-      "id": "REQ-6",
-      "summary": "Build a Flight Records view with scrollable table display and month/student name filter controls",
-      "acceptanceCriteria": [
-        "Flight records are displayed in a scrollable table with all 11 column headers",
-        "Month filter (YYYY-MM) narrows results to entries matching that month",
-        "Student filter narrows results to entries containing the search string (case-insensitive)",
-        "Both filters can be combined",
-        "Reset button clears filters and reloads all records",
-        "Empty state message shown when no records match"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/FlightRecordsPage.tsx",
-          "operation": "create",
-          "description": "Create a flight records view page with filter controls for month (YYYY-MM input) and student name (text input). Include Search and Reset buttons. Display flight entries in a scrollable table with columns: Date, Student, Instructor, Aircraft, Type, Exercise, Takeoff, Landing, Total, Landing Type, Landing Count. Fetch data via getFlightEntries with filter parameters. Show empty state message when no records match. Use responsive table layout with aviation theme and card-based filter panel."
-        },
-        {
-          "path": "frontend/src/hooks/useFlightEntries.ts",
-          "operation": "create",
-          "description": "Create a custom hook that wraps useQuery for fetching flight entries via getFlightEntries. Accept optional filterMonth and filterStudent parameters and pass them to the backend function. Return flight entries array and loading/error states."
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Fix the useDeleteFlightEntry mutation hook to correctly call actor.deleteFlightEntry with the entryId as BigInt. Ensure the mutation invalidates the ['flightEntries'] query cache on success to trigger a table refresh, and displays success and error toast notifications appropriately. Handle any errors returned from the backend gracefully."
         },
         {
           "path": "frontend/src/components/FlightRecordsTable.tsx",
-          "operation": "create",
-          "description": "Create a reusable table component for displaying flight records with all 11 columns. Accept an array of FlightEntry objects as props. Use shadcn/ui Table component with responsive design. Apply aviation theme styling and ensure mobile-friendly horizontal scrolling if needed."
-        }
-      ]
-    },
-    {
-      "id": "REQ-7",
-      "summary": "Build a Main Menu navigation screen with buttons to all application sections and a logout button",
-      "acceptanceCriteria": [
-        "Main menu shows navigation buttons for all 6 sections",
-        "Each button navigates to the correct screen",
-        "A Logout button is present and clears the user session"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/MainMenuPage.tsx",
-          "operation": "create",
-          "description": "Create a main menu page with navigation buttons for Flight Log Entry, Students, Instructors, Aircraft, Exercises, and Flight Records. Include the app logo (frontend/public/assets/generated/flight-log-logo.dim_256x256.png) at the top. Add a Logout button in the header that calls the authorization component's clear function and clears the query cache. Use card-based button layout with aviation theme and touch-friendly sizing. Each button navigates using React Router."
-        },
-        {
-          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Register routes for MainMenuPage (/), FlightLogEntryPage (/flight-log), StudentsPage (/students), InstructorsPage (/instructors), AircraftPage (/aircraft), ExercisesPage (/exercises), and FlightRecordsPage (/records). Ensure all routes are wrapped by AuthGuard. Set MainMenuPage as the default authenticated landing route."
-        },
-        {
-          "path": "frontend/src/components/Header.tsx",
-          "operation": "create",
-          "description": "Create a reusable Header component that displays the app logo, current page title, and a Logout button. Use the authorization component's useInternetIdentity hook for logout functionality and clear the query cache on logout. Apply aviation theme styling. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-8",
-      "summary": "Apply aviation-themed visual design with dark navy and sky-blue palette, responsive layout, and touch-friendly controls",
-      "acceptanceCriteria": [
-        "Consistent dark navy and sky-blue color palette applied throughout",
-        "All buttons and interactive elements have minimum 44px touch target height",
-        "Layout adapts to mobile screen widths without horizontal scrolling",
-        "Card-style panels are used to group form sections and list items"
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Define CSS custom properties for the aviation theme color palette: dark navy primary (#0A1929), sky-blue accent (#4A90E2), white text (#FFFFFF), and supporting shades. Set minimum touch target sizes (44px). Apply base typography with bold section headers. Ensure responsive breakpoints for mobile-first design."
-        },
-        {
-          "path": "frontend/tailwind.config.js",
-          "operation": "modify",
-          "description": "Extend Tailwind theme with custom aviation color palette (navy, sky-blue). Configure minimum height utilities for touch targets. Add card component styles with borders and shadows. Ensure responsive utilities are enabled."
+          "description": "Review and fix the delete action handler to ensure the correct entryId is extracted from the selected flight entry row and passed as BigInt to the useDeleteFlightEntry mutation when the user confirms deletion in the alert dialog. Verify that the confirmation dialog is properly wired and that the mutation is triggered only after user confirmation. Ensure the table UI updates immediately after successful deletion via query invalidation."
         }
       ]
     }

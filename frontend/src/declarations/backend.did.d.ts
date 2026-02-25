@@ -10,6 +10,10 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface AircraftSummary {
+  'totalFlightHours' : number,
+  'aircraft' : string,
+}
 export interface Category { 'name' : string }
 export interface FlightEntry {
   'totalFlightTime' : string,
@@ -27,6 +31,10 @@ export interface FlightEntry {
     { 'night' : null },
   'landingCount' : bigint,
 }
+export interface StudentTotalHours {
+  'totalFlightHours' : number,
+  'student' : string,
+}
 export interface UserProfile { 'name' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
@@ -37,16 +45,31 @@ export interface _SERVICE {
   'addFlightEntry' : ActorMethod<[FlightEntry], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'deleteCategory' : ActorMethod<[string, string], undefined>,
+  'deleteFlightEntry' : ActorMethod<[bigint], undefined>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getFlightEntries' : ActorMethod<
     [[] | [string], [] | [string]],
     Array<FlightEntry>
   >,
+  'getFlightEntry' : ActorMethod<[bigint], [] | [FlightEntry]>,
+  /**
+   * / * Computes total flight hours per aircraft by aggregating the caller's flight entries.
+   * /    * Groups by aircraft name and sums total flight time per aircraft.
+   * /    * Returns an array of aircraft summaries with total hours.
+   */
+  'getTotalFlightHoursByAircraft' : ActorMethod<[], Array<AircraftSummary>>,
+  /**
+   * / * Computes total flight hours per student by aggregating the caller's flight entries.
+   * /    * Groups by student name and sums total flight time per student.
+   * /    * Returns an array of student summaries with total hours.
+   */
+  'getTotalFlightHoursByStudent' : ActorMethod<[], Array<StudentTotalHours>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'listCategories' : ActorMethod<[string], Array<Category>>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'updateFlightEntry' : ActorMethod<[bigint, FlightEntry], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];
